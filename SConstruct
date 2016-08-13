@@ -440,6 +440,12 @@ config_options = [
            Not needed if the libraries are installed in a standard location,
            e.g. /usr/lib.""",
         '', PathVariable.PathAccept),
+    PathVariable(
+        'eigen_include',
+        """The directory where the eigen header files are installed.
+           Not needed if the libraries are installed in a standard location,
+           e.g. /usr/lib.""",
+        '', PathVariable.PathAccept),
     ('blas_lapack_libs',
      """Cantera can use BLAS and LAPACK libraries available on your system if
         you have optimized versions available (e.g. Intel MKL). Otherwise,
@@ -658,6 +664,10 @@ if env['system_sundials'] in ('y','default'):
     if env['sundials_libdir']:
         env.Append(LIBPATH=[env['sundials_libdir']])
         env['system_sundials'] = 'y'
+
+if env['eigen_include']:
+    env.Append(CPPPATH=[env['eigen_include']]) 
+    env['system_sundials'] = 'y'
 
 # BLAS / LAPACK configuration
 if env['blas_lapack_libs'] != '':
