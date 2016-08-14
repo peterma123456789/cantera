@@ -3,6 +3,7 @@
 // known transport models
 #include "cantera/transport/MultiTransport.h"
 #include "cantera/transport/MixTransport.h"
+#include "cantera/transport/MixEzTransport.h"
 #include "cantera/transport/SolidTransport.h"
 #include "cantera/transport/DustyGasTransport.h"
 #include "cantera/transport/SimpleTransport.h"
@@ -44,6 +45,7 @@ TransportFactory::TransportFactory()
     reg("", []() { return new Transport(); });
     reg("None", []() { return new Transport(); });
     reg("Mix", []() { return new MixTransport(); });
+    reg("MixEz", []() { return new MixEzTransport(); });
     reg("Multi", []() { return new MultiTransport(); });
     reg("CK_Mix", []() { return new MixTransport(); });
     reg("CK_Multi", []() { return new MultiTransport(); });
@@ -52,6 +54,7 @@ TransportFactory::TransportFactory()
     m_CK_mode["CK_Multi"] = true;
 
     m_models["Mix"] = cMixtureAveraged;
+    m_models["MixEz"] = cMixtureAveragedEz;
     m_models["Multi"] = cMulticomponent;
     m_models["Solid"] = cSolidTransport;
     m_models["DustyGas"] = cDustyGasTransport;

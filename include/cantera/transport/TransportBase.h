@@ -38,6 +38,7 @@ const int None = 199;
 const int cMulticomponent = 200;
 const int CK_Multicomponent = 202;
 const int cMixtureAveraged = 210;
+const int cMixtureAveragedEz = 212;
 const int CK_MixtureAveraged = 211;
 const int cHighP = 270;
 const int cSolidTransport = 300;
