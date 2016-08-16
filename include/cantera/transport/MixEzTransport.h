@@ -21,7 +21,7 @@ namespace Cantera
 /*!
  * The model is based on that described in: R. J. Kee, M. J. Coltrin, and P.
  * Glarborg, "Chemically Reacting Flow: Theory & Practice", John Wiley & Sons,
- * 2003. and Reid, Robert C., John M. Prausnitz, and Bruce E. Poling. "The
+ * 2003 and Reid, Robert C., John M. Prausnitz, and Bruce E. Poling. "The
  * properties of gases and liquids." (1987).
  *
  * The viscosity is computed using the Herning and Zipperer mixture rule
@@ -159,6 +159,50 @@ public:
      */
     virtual void update_C();
 
+    //! Returns the Mixture-averaged diffusion coefficients [m^2/s].
+    /*!
+     * Returns the mixture averaged diffusion coefficients for a gas,
+     * appropriate for calculating the mass averaged diffusive flux with respect
+     * to the mass averaged velocity using gradients of the mole fraction.
+     * See GasTransport::getMixDiffCoeffs for more info.
+     *
+     * \f[  D_{km}' = \frac{1}{Le'} \frac{\lambda}{\rho \C_p} \f]
+     *
+     * @param[out] d  Vector of mixture diffusion coefficients, \f$ D_{km}' \f$ ,
+     *     for each species (m^2/s). length m_nsp
+     */
+    virtual void getMixDiffCoeffs(doublereal* const d);
+
+    //! Returns the mixture-averaged diffusion coefficients [m^2/s].
+    //! These are the coefficients for calculating the molar diffusive fluxes
+    //! from the species mole fraction gradients, computed using the
+    //! corresponding Lewis number. The definition of the diffusion coefficients
+    //! in the Lewis number is according to Eq. 12.176 in
+    //! "Chemically Reacting Flow":
+    //!
+    //! \f[  D_{km}^* = \frac{1}{Le^*} \frac{\lambda}{\rho \C_p} \f]
+    //!
+    //! @param[out] d vector of mixture-averaged diffusion coefficients for
+    //!     each species, length m_nsp.
+    virtual void getMixDiffCoeffsMole(doublereal* const d);
+
+    //! Returns the mixture-averaged diffusion coefficients [m^2/s].
+    /*!
+     * These are the coefficients for calculating the diffusive mass fluxes
+     * from the species mass fraction gradients, computed using the
+     * corresponding Lewis number. The definition of the diffusion coefficients
+     * in the Lewis number is according to Eq. 12.178 in
+     * "Chemically Reacting Flow":
+     *
+     * \f[
+     *     D_{km} = \frac{1}{Le} \frac{\lambda}{\rho \C_p}
+     * \f]
+     *
+     * @param[out] d vector of mixture-averaged diffusion coefficients for
+     *     each species, length m_nsp.
+     */
+    virtual void getMixDiffCoeffsMass(doublereal* const d);
+
     //! Get the species diffusive mass fluxes wrt to the mass averaged velocity,
     //! given the gradients in mole fraction and temperature
     /*!
@@ -185,6 +229,13 @@ public:
                                   size_t ldf, doublereal* const fluxes);
 
     virtual void init(thermo_t* thermo, int mode=0, int log_level=0);
+
+    //! Update the Lewis number
+    /*!
+     * These are evaluated from the mixture-averaged diffusion coefficients in
+     * GasTransport and thermal conductivity;
+     */
+    virtual void updateLewisNumber();
 
 private:
     //! Calculate the pressure from the ideal gas law
@@ -233,14 +284,27 @@ private:
     //! Update boolean for the mixture rule for the mixture thermal conductivity
     bool m_condmix_ok;
 
+    //! Update boolean for Lewis number precomputation
+    bool m_lewis_ok;
+
     //! Debug flag - turns on more printing
     bool m_debug;
 
     //! Local copy of square roots of the species molecular weights.
     Eigen::VectorXd m_sqrt_mw;
+
     //! Local copy of square roots of the reciprocal of the species molecular
     //! weights.
     Eigen::VectorXd m_sqrt_rmw;
+
+    //! Reciprocal of Le for MixDiffCoeffs
+    Eigen::VectorXd m_rLeDiffCoeffs;
+
+    //! Reciprocal of Le for MixDiffCoeffsMole
+    Eigen::VectorXd m_rLeDiffCoeffsMole;
+
+    //! Reciprocal of Le for MixDiffCoeffsMass
+    Eigen::VectorXd m_rLeDiffCoeffsMass;
 };
 }
 #endif

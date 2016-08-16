@@ -15,6 +15,7 @@ MixEzTransport::MixEzTransport() :
     m_lambda(0.0),
     m_spcond_ok(false),
     m_condmix_ok(false),
+    m_lewis_ok(false),
     m_debug(false)
 {
 }
@@ -101,6 +102,18 @@ void MixEzTransport::init(ThermoPhase* thermo, int mode, int log_level)
     m_sqrt_mw = Eigen::Map<Eigen::VectorXd>(m_mw.data(), m_nsp);
     m_sqrt_mw = m_sqrt_mw.array().sqrt();
     m_sqrt_rmw = m_sqrt_mw.cwiseInverse();
+
+    // initialze array of Lewis numers
+    m_rLeDiffCoeffs = Eigen::VectorXd::Ones(m_nsp);
+    m_rLeDiffCoeffsMole = Eigen::VectorXd::Ones(m_nsp);
+    m_rLeDiffCoeffsMass = Eigen::VectorXd::Ones(m_nsp);
+
+    // calculate Lewis numbers
+    updateLewisNumber();
+
+    // release memory init by GasTransport::init
+    m_wratjk.resize(0, 0); m_wratjk.data().shrink_to_fit();
+    m_wratkj1.resize(0, 0); m_wratjk.data().shrink_to_fit();
 }
 
 void MixEzTransport::getMobilities(doublereal* const mobil)
@@ -138,6 +151,45 @@ void MixEzTransport::getThermalDiffCoeffs(doublereal* const dt)
     }
 }
 
+void MixEzTransport::getMixDiffCoeffs(doublereal* const d)
+{
+    if (!m_lewis_ok) updateLewisNumber();
+    // Update thermal conductivity
+    thermalConductivity();
+    // Compute thermal diffusivity
+    double thermalDiffusivity = m_lambda /
+        (m_thermo->density() * m_thermo->cp_mass());
+    // Compute MixDiff from Lewis number
+    Eigen::Map<Eigen::VectorXd>(d, m_nsp) =
+        m_rLeDiffCoeffs * thermalDiffusivity;
+}
+
+void MixEzTransport::getMixDiffCoeffsMole(doublereal* const d)
+{
+    if (!m_lewis_ok) updateLewisNumber();
+    // Update thermal conductivity
+    thermalConductivity();
+    // Compute thermal diffusivity
+    double thermalDiffusivity = m_lambda /
+        (m_thermo->density() * m_thermo->cp_mass());
+    // Compute MixDiff from Lewis number
+    Eigen::Map<Eigen::VectorXd>(d, m_nsp) =
+        m_rLeDiffCoeffsMole * thermalDiffusivity;
+}
+
+void MixEzTransport::getMixDiffCoeffsMass(doublereal* const d)
+{
+    if (!m_lewis_ok) updateLewisNumber();
+    // Update thermal conductivity
+    thermalConductivity();
+    // Compute thermal diffusivity
+    double thermalDiffusivity = m_lambda /
+        (m_thermo->density() * m_thermo->cp_mass());
+    // Compute MixDiff from Lewis number
+    Eigen::Map<Eigen::VectorXd>(d, m_nsp) =
+        m_rLeDiffCoeffsMass * thermalDiffusivity;
+}
+
 void MixEzTransport::getSpeciesFluxes(size_t ndim, const doublereal* const grad_T,
                                     size_t ldx, const doublereal* const grad_X,
                                     size_t ldf, doublereal* const fluxes)
@@ -145,6 +197,7 @@ void MixEzTransport::getSpeciesFluxes(size_t ndim, const doublereal* const grad_
     update_T();
     update_C();
     getMixDiffCoeffs(m_spwork.data());
+    GasTransport::getMixDiffCoeffs(m_spwork.data());
     const vector_fp& mw = m_thermo->molecularWeights();
     const doublereal* y = m_thermo->massFractions();
     doublereal rhon = m_thermo->molarDensity();
@@ -207,6 +260,26 @@ void MixEzTransport::updateCond_T()
     }
     m_spcond_ok = true;
     m_condmix_ok = false;
+}
+
+void MixEzTransport::updateLewisNumber()
+{
+    // Update thermal conductivity
+    thermalConductivity();
+    // Compute thermal diffusivity
+    // \alpha = \frac{\lambda}{\rho \C_p}
+    double thermalDiffusivity = m_lambda /
+        (m_thermo->density() * m_thermo->cp_mass());
+    // Compute mixutre-averaged diffusion coefficients
+    GasTransport::getMixDiffCoeffs(m_rLeDiffCoeffs.data());
+    GasTransport::getMixDiffCoeffsMole(m_rLeDiffCoeffsMole.data());
+    GasTransport::getMixDiffCoeffsMass(m_rLeDiffCoeffsMass.data());
+    // Compute reciprocals of Lewis numbers
+    m_rLeDiffCoeffs /= thermalDiffusivity;
+    m_rLeDiffCoeffsMole /= thermalDiffusivity;;
+    m_rLeDiffCoeffsMass /= thermalDiffusivity;
+    // Update ok flag
+    m_lewis_ok = true;
 }
 
 }
