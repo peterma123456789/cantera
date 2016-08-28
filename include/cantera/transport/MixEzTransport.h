@@ -1,5 +1,5 @@
 /**
-   *  @file MixEzTransport.h
+ *  @file MixEzTransport.h
  *    Headers for the MixEzTransport object, which models transport properties
  *    in ideal gas solutions using a mixture averaged approximation
  *    (see \ref tranprops and \link Cantera::MixEzTransport MixEzTransport \endlink) .
