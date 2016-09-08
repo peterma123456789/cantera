@@ -4,6 +4,7 @@
  *     tranprops group definition (see \ref tranprops and \link
  *     Cantera::Transport Transport \endlink) .
  */
+// Copyright 2016  Hao Wu (wuhao@stanford.edu)
 // Copyright 2001-2003  California Institute of Technology
 
 /**

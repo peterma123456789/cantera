@@ -2,7 +2,7 @@
  *  @file MixEzTransport.cpp
  *  Mixture-averaged transport properties for ideal gas mixtures.
  */
-// copyright 2001 California Institute of Technology
+// copyright 2016 Hao Wu (wuhao@stanford.edu)
 
 #include "cantera/transport/MixEzTransport.h"
 #include "cantera/base/stringUtils.h"
