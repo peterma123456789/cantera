@@ -62,7 +62,7 @@ public:
     virtual void invalidateCache();
     //@}
 
-    void updateROP();
+    virtual void updateROP();
 
     //! Update temperature-dependent portions of reaction rates and falloff
     //! functions.
@@ -110,7 +110,7 @@ protected:
     vector_fp concm_falloff_values;
     //!@}
 
-    void processFalloffReactions();
+    virtual void processFalloffReactions();
 
     void addThreeBodyReaction(ThreeBodyReaction& r);
     void addFalloffReaction(FalloffReaction& r);
@@ -123,7 +123,7 @@ protected:
     void modifyChebyshevReaction(size_t i, ChebyshevReaction& r);
 
     //! Update the equilibrium constants in molar units.
-    void updateKc();
+    virtual void updateKc();
 
     bool m_finalized;
 };
