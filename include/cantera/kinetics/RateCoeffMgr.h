@@ -88,12 +88,8 @@ public:
                 const std::vector<bool>& imuted, doublereal* values) {
         doublereal recipT = 1.0/T;
         for (size_t i = 0; i != m_rates.size(); i++) {
-            if (imuted[m_rxn[i]]) {
-              // set value to zero if reaction m_rxn[i] is muted
-              values[m_rxn[i]] = 0.;
-            } else {
-              values[m_rxn[i]] = m_rates[i].updateRC(logT, recipT);
-            }
+            values[m_rxn[i]] = (imuted[m_rxn[i]]) ? 0. :
+              m_rates[i].updateRC(logT, recipT);
         }
     }
 

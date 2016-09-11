@@ -67,7 +67,8 @@ void AdaptiveGasKinetics::update_rates_C()
 
     // 3-body reactions
     if (!concm_3b_values.empty()) {
-        m_3b_concm.update(m_conc, ctot, concm_3b_values.data());
+        m_3b_concm.update(m_conc, ctot, m_imuted_reactions,
+                          concm_3b_values.data());
     }
 
     // Falloff reactions
@@ -102,12 +103,8 @@ void AdaptiveGasKinetics::updateKc()
     doublereal rrt = 1.0 / thermo().RT();
     for (size_t i = 0; i < m_revindex.size(); i++) {
         size_t irxn = m_revindex[i];
-        if (m_imuted_reactions[irxn]) {
-          m_rkcn[irxn] = 0.0;
-        } else {
-          m_rkcn[irxn] = std::min(exp(m_rkcn[irxn]*rrt - m_dn[irxn]*m_logStandConc),
-                                  BigNumber);
-        }
+        m_rkcn[irxn] = (m_imuted_reactions[irxn]) ? 1.0 :
+        std::min(exp(m_rkcn[irxn]*rrt - m_dn[irxn]*m_logStandConc), BigNumber);
     }
 
     for (size_t i = 0; i != m_irrev.size(); ++i) {
