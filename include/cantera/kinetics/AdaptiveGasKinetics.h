@@ -38,17 +38,37 @@ public:
   virtual bool addReaction(shared_ptr<Reaction> r);
   //@}
 
-  virtual void updateROP();
+  /**
+   * Species net production rates [kmol/m^3/s or kmol/m^2/s]. Return the
+   * species net production rates (creation - destruction) in array wdot,
+   * which must be dimensioned at least as large as the total number of
+   * species. @see nTotalSpecies. Adpative kinetics is activated.
+   *
+   * @param wdot   Output vector of net production rates. Length: m_kk.
+   */
+  virtual void getNetProductionRates(doublereal* wdot);
+
+  /**
+   * Species net production rates [kmol/m^3/s or kmol/m^2/s]. Return the
+   * species net production rates (creation - destruction) in array wdot,
+   * which must be dimensioned at least as large as the total number of
+   * species. @see nTotalSpecies. Adpative kinetics is deactivated.
+   *
+   * @param wdot   Output vector of net production rates. Length: m_kk.
+   */
+  virtual void getNetProductionRatesFull(doublereal* wdot);
+
+  void updateROP_adp();
 
   //! Update temperature-dependent portions of reaction rates and falloff
   //! functions.
-  virtual void update_rates_T();
+  void update_rates_T_adp();
 
   //! Update properties that depend on concentrations.
   //! Currently the enhanced collision partner concentrations are updated
   //! here, as well as the pressure-dependent portion of P-log and Chebyshev
   //! reactions.
-  virtual void update_rates_C();
+  void update_rates_C_adp();
 
   //! @}
   //! @name Adaptive Reactions Routines
@@ -76,7 +96,7 @@ protected:
   virtual void processFalloffReactions();
 
   //! Update the equilibrium constants in molar units.
-  virtual void updateKc();
+  void updateKc_adp();
 
 };
 }

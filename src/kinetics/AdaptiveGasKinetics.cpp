@@ -5,6 +5,7 @@
 // Copyright 2016 Hao Wu (wuhao@stanford.edu)
 
 #include "cantera/kinetics/AdaptiveGasKinetics.h"
+#include <Eigen/Core>
 
 using namespace std;
 
@@ -20,7 +21,31 @@ Kinetics *AdaptiveGasKinetics::duplMyselfAsKinetics(
   return gK;
 }
 
-void AdaptiveGasKinetics::update_rates_T()
+void AdaptiveGasKinetics::getNetProductionRates(doublereal* net)
+{
+    updateROP_adp();
+
+    fill(net, net + m_kk, 0.0);
+    // products are created for positive net rate of progress
+    m_revProductStoich.incrementSpecies(m_ropnet.data(), net);
+    m_irrevProductStoich.incrementSpecies(m_ropnet.data(), net);
+    // reactants are destroyed for positive net rate of progress
+    m_reactantStoich.decrementSpecies(m_ropnet.data(), net);
+}
+
+void AdaptiveGasKinetics::getNetProductionRatesFull(doublereal* net)
+{
+    GasKinetics::updateROP();
+
+    fill(net, net + m_kk, 0.0);
+    // products are created for positive net rate of progress
+    m_revProductStoich.incrementSpecies(m_ropnet.data(), net);
+    m_irrevProductStoich.incrementSpecies(m_ropnet.data(), net);
+    // reactants are destroyed for positive net rate of progress
+    m_reactantStoich.decrementSpecies(m_ropnet.data(), net);
+}
+
+void AdaptiveGasKinetics::update_rates_T_adp()
 {
     doublereal T = thermo().temperature();
     doublereal P = thermo().pressure();
@@ -41,7 +66,7 @@ void AdaptiveGasKinetics::update_rates_T()
         if (!falloff_work.empty()) {
             m_falloffn.updateTemp(T, m_imuted_fall, falloff_work.data());
         }
-        updateKc();
+        updateKc_adp();
         m_ROP_ok = false;
     }
 
@@ -60,7 +85,7 @@ void AdaptiveGasKinetics::update_rates_T()
     m_temp = T;
 }
 
-void AdaptiveGasKinetics::update_rates_C()
+void AdaptiveGasKinetics::update_rates_C_adp()
 {
     thermo().getActivityConcentrations(m_conc.data());
     doublereal ctot = thermo().molarDensity();
@@ -92,7 +117,7 @@ void AdaptiveGasKinetics::update_rates_C()
     m_ROP_ok = false;
 }
 
-void AdaptiveGasKinetics::updateKc()
+void AdaptiveGasKinetics::updateKc_adp()
 {
     thermo().getStandardChemPotentials(m_grt.data());
     fill(m_rkcn.begin(), m_rkcn.end(), 0.0);
@@ -112,10 +137,10 @@ void AdaptiveGasKinetics::updateKc()
     }
 }
 
-void AdaptiveGasKinetics::updateROP()
+void AdaptiveGasKinetics::updateROP_adp()
 {
-    update_rates_C();
-    update_rates_T();
+    update_rates_C_adp();
+    update_rates_T_adp();
     if (m_ROP_ok) {
         return;
     }
