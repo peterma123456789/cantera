@@ -12,6 +12,7 @@
 #include "ThirdBodyCalc.h"
 #include "FalloffMgr.h"
 #include "Reaction.h"
+#include "RxnActiveMgr.h"
 
 namespace Cantera
 {
@@ -73,27 +74,29 @@ public:
   //! @}
   //! @name Adaptive Reactions Routines
   //! @{
-  virtual void setMuteReaction(const size_t i, const bool flag = true);
+  //! Prepare adaptation manager
+  void prepareAdaptation();
 
-  // NOTE: Shall not need the following two.
-  // Shall be able to perform full-kinetics calculations by casting to
-  // the base class (GasKinetics).
-  //
-  // virtual void updateROP_full();
-  //
-  // virtual void getNetProductionRates_full(doublereal* wdot);
+  //! Update adaptation manager
+  void updateAdaptation(const double relTol = 1e-6, const double absTol = 1e-8);
 
-  virtual const std::vector<bool>& iMuteRractions()
-    { return m_imuted_reactions; };
+  virtual void setActiveReaction(const size_t i, const bool flag = true);
+
+  virtual const std::vector<bool>& iActiveRractions()
+    { return m_active_reactions; };
   //@}
 
 protected:
   //! Vector of flag for reaction muting
-  std::vector<bool> m_imuted_reactions;
+  std::vector<bool> m_active_reactions;
   //! Vector of flag for falloff reaction muting
-  std::vector<bool> m_imuted_fall;
+  std::vector<bool> m_active_fall;
 
-  virtual void processFalloffReactions();
+  // Reaction activation manager
+  RxnActiveMgr m_rxnactmgr;
+  bool m_ready_rxnactmgr;
+
+  void processFalloffReactions_adp();
 
   //! Update the equilibrium constants in molar units.
   void updateKc_adp();

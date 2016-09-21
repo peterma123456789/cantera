@@ -12,7 +12,8 @@ using namespace std;
 namespace Cantera {
 
 AdaptiveGasKinetics::AdaptiveGasKinetics(thermo_t *thermo)
-    : GasKinetics(thermo) {}
+    : GasKinetics(thermo), m_rxnactmgr((Kinetics*) this),
+      m_ready_rxnactmgr(false) {}
 
 Kinetics *AdaptiveGasKinetics::duplMyselfAsKinetics(
     const std::vector<thermo_t *> &tpVector) const {
@@ -54,17 +55,17 @@ void AdaptiveGasKinetics::update_rates_T_adp()
 
     if (T != m_temp) {
         if (!m_rfn.empty()) {
-            m_rates.update(T, logT, m_imuted_reactions, m_rfn.data());
+            m_rates.update(T, logT, m_active_reactions, m_rfn.data());
         }
 
         if (!m_rfn_low.empty()) {
-            m_falloff_low_rates.update(T, logT, m_imuted_fall,
+            m_falloff_low_rates.update(T, logT, m_active_fall,
                                        m_rfn_low.data());
-            m_falloff_high_rates.update(T, logT, m_imuted_fall,
+            m_falloff_high_rates.update(T, logT, m_active_fall,
                                         m_rfn_high.data());
         }
         if (!falloff_work.empty()) {
-            m_falloffn.updateTemp(T, m_imuted_fall, falloff_work.data());
+            m_falloffn.updateTemp(T, m_active_fall, falloff_work.data());
         }
         updateKc_adp();
         m_ROP_ok = false;
@@ -72,12 +73,12 @@ void AdaptiveGasKinetics::update_rates_T_adp()
 
     if (T != m_temp || P != m_pres) {
         if (m_plog_rates.nReactions()) {
-            m_plog_rates.update(T, logT, m_imuted_reactions, m_rfn.data());
+            m_plog_rates.update(T, logT, m_active_reactions, m_rfn.data());
             m_ROP_ok = false;
         }
 
         if (m_cheb_rates.nReactions()) {
-            m_cheb_rates.update(T, logT, m_imuted_reactions, m_rfn.data());
+            m_cheb_rates.update(T, logT, m_active_reactions, m_rfn.data());
             m_ROP_ok = false;
         }
     }
@@ -92,26 +93,26 @@ void AdaptiveGasKinetics::update_rates_C_adp()
 
     // 3-body reactions
     if (!concm_3b_values.empty()) {
-        m_3b_concm.update(m_conc, ctot, m_imuted_reactions,
+        m_3b_concm.update(m_conc, ctot, m_active_reactions,
                           concm_3b_values.data());
     }
 
     // Falloff reactions
     if (!concm_falloff_values.empty()) {
-        m_falloff_concm.update(m_conc, ctot, m_imuted_reactions,
+        m_falloff_concm.update(m_conc, ctot, m_active_reactions,
                                concm_falloff_values.data());
     }
 
     // P-log reactions
     if (m_plog_rates.nReactions()) {
         double logP = log(thermo().pressure());
-        m_plog_rates.update_C(m_imuted_reactions, &logP);
+        m_plog_rates.update_C(m_active_reactions, &logP);
     }
 
     // Chebyshev reactions
     if (m_cheb_rates.nReactions()) {
         double log10P = log10(thermo().pressure());
-        m_cheb_rates.update_C(m_imuted_reactions, &log10P);
+        m_cheb_rates.update_C(m_active_reactions, &log10P);
     }
 
     m_ROP_ok = false;
@@ -128,8 +129,8 @@ void AdaptiveGasKinetics::updateKc_adp()
     doublereal rrt = 1.0 / thermo().RT();
     for (size_t i = 0; i < m_revindex.size(); i++) {
         size_t irxn = m_revindex[i];
-        m_rkcn[irxn] = (m_imuted_reactions[irxn]) ? 1.0 :
-        std::min(exp(m_rkcn[irxn]*rrt - m_dn[irxn]*m_logStandConc), BigNumber);
+        m_rkcn[irxn] = (m_active_reactions[irxn]) ?
+          std::min(exp(m_rkcn[irxn]*rrt - m_dn[irxn]*m_logStandConc), BigNumber) : 1.0;
     }
 
     for (size_t i = 0; i != m_irrev.size(); ++i) {
@@ -154,7 +155,7 @@ void AdaptiveGasKinetics::updateROP_adp()
     }
 
     if (m_falloff_high_rates.nReactions()) {
-        processFalloffReactions();
+        processFalloffReactions_adp();
     }
 
     // multiply by perturbation factor
@@ -173,8 +174,9 @@ void AdaptiveGasKinetics::updateROP_adp()
     // for reversible reactions, multiply ropr by concentration products
     m_revProductStoich.multiply(m_conc.data(), m_ropr.data());
 
+    // subtract backward from forward
     for (size_t j = 0; j != nReactions(); ++j) {
-        m_ropnet[j] = (m_imuted_reactions[j]) ? 0.0 : m_ropf[j] - m_ropr[j];
+        m_ropnet[j] = (m_active_reactions[j]) ? m_ropf[j] - m_ropr[j] : 0.0;
     }
 
     for (size_t i = 0; i < m_rfn.size(); i++) {
@@ -188,32 +190,32 @@ void AdaptiveGasKinetics::updateROP_adp()
     m_ROP_ok = true;
 }
 
-void AdaptiveGasKinetics::processFalloffReactions()
+void AdaptiveGasKinetics::processFalloffReactions_adp()
 {
     // use m_ropr for temporary storage of reduced pressure
     vector_fp& pr = m_ropr;
 
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        if (m_imuted_fall[i]) {
-          pr[i] = 0.;
-        } else {
+        if (m_active_fall[i]) {
           pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
+        } else {
+          pr[i] = 0.;
         }
-        AssertFinite(pr[i], "GasKinetics::processFalloffReactions",
+        AssertFinite(pr[i], "GasKinetics::processFalloffReactions_adp",
                      "pr[{}] is not finite.", i);
     }
 
-    m_falloffn.pr_to_falloff(pr.data(), m_imuted_fall, falloff_work.data());
+    m_falloffn.pr_to_falloff(pr.data(), m_active_fall, falloff_work.data());
 
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        if (m_imuted_fall[i]) {
-          pr[i] = 0.;
-        } else {
+        if (m_active_fall[i]) {
           if (reactionType(m_fallindx[i]) == FALLOFF_RXN) {
               pr[i] *= m_rfn_high[i];
           } else { // CHEMACT_RXN
               pr[i] *= m_rfn_low[i];
           }
+        } else {
+          pr[i] = 0.;
         }
     }
 
@@ -228,33 +230,54 @@ bool AdaptiveGasKinetics::addReaction(shared_ptr<Reaction> r)
   if (!added) {
       return false;
   }
-  //  grow m_imuted_reactions
-  m_imuted_reactions.push_back(false);
-  if (m_imuted_reactions.size() != nReactions())
+  //  grow m_active_reactions
+  m_active_reactions.push_back(true);
+  if (m_active_reactions.size() != nReactions())
     throw CanteraError("AdaptiveGasKinetics::addReaction",
-        "Size of the reaction muting flag does not match the number of reactions.");
+        "Size of the reaction active flag does not match the number of reactions.");
   // special instruction for fallof reactions
   if (r->reaction_type == FALLOFF_RXN || r->reaction_type == CHEMACT_RXN) {
-    m_imuted_fall.push_back(false);
-    if (m_imuted_fall.size() != m_falloff_high_rates.nReactions())
+    m_active_fall.push_back(true);
+    if (m_active_fall.size() != m_falloff_high_rates.nReactions())
       throw CanteraError("AdaptiveGasKinetics::addReaction",
-          "Size of the falloff reaction muting flag does not match the number of falloff reactions.");
+          "Size of the falloff reaction active flag does not match the number of falloff reactions.");
   }
   return true;
 }
 
-void AdaptiveGasKinetics::setMuteReaction(const size_t i, const bool flag)
+void AdaptiveGasKinetics::prepareAdaptation()
+{
+  m_rxnactmgr.updateStoichMatrix();
+  m_ready_rxnactmgr = true;
+}
+
+void AdaptiveGasKinetics::updateAdaptation(const double relTol,
+                                           const double absTol)
+{
+  if (!m_ready_rxnactmgr) prepareAdaptation();
+  m_rxnactmgr.updateActiveRxns(relTol, absTol);
+  const std::vector<bool>& _iactive = m_rxnactmgr.iActive();
+  AssertThrowMsg(_iactive.size() == nReactions(),
+                 "AdaptiveGasKinetics::updateAdaptation",
+                 "Size of iActive ({}) does not equal the number of reactions ({}).", _iactive.size(), nReactions());
+  for (size_t iRxn = 0; iRxn < nReactions(); iRxn++) {
+    setActiveReaction(iRxn, _iactive[iRxn]);
+  }
+}
+
+inline void AdaptiveGasKinetics::setActiveReaction(const size_t i,
+                                                   const bool flag)
 {
   // Check if i is in range of reaction indices
   GasKinetics::checkReactionIndex(i);
-  // Return if muting flag of reaction i does not change
-  if (m_imuted_reactions[i] == flag) return;
+  // Return if active flag of reaction i does not change
+  if (m_active_reactions[i] == flag) return;
   // Get reaction i
   shared_ptr<Reaction>& r = m_reactions[i];
-  // Mark reaction i as muted
-  m_imuted_reactions[i] = flag;
+  // Mark reaction i's active flag
+  m_active_reactions[i] = flag;
   if (r->reaction_type == FALLOFF_RXN || r->reaction_type == CHEMACT_RXN) {
-    m_imuted_fall[m_rfallindx[i]] = flag;
+    m_active_fall[m_rfallindx[i]] = flag;
   }
 }
 

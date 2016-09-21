@@ -41,15 +41,16 @@ public:
     }
 
     void update(const vector_fp& conc, double ctot,
-                const std::vector<bool>& imuted, double* work) {
+                const std::vector<bool>& iactive, double* work) {
         for (size_t i = 0; i < m_species.size(); i++) {
             // skip if m_reaction_index[i]] is muted
-            if (imuted[m_reaction_index[i]]) continue;
-            double sum = 0.0;
-            for (size_t j = 0; j < m_species[i].size(); j++) {
-                sum += m_eff[i][j] * conc[m_species[i][j]];
+            if (iactive[m_reaction_index[i]]) {
+              double sum = 0.0;
+              for (size_t j = 0; j < m_species[i].size(); j++) {
+                  sum += m_eff[i][j] * conc[m_species[i][j]];
+              }
+              work[i] = m_default[i] * ctot + sum;
             }
-            work[i] = m_default[i] * ctot + sum;
         }
     }
 

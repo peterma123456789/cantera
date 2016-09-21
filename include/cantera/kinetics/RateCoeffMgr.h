@@ -58,11 +58,10 @@ public:
      * Update the concentration-dependent parts of the rate coefficient, in
      * accordance with the muted flag.
      */
-    void update_C(const std::vector<bool>& imuted, const doublereal* c) {
+    void update_C(const std::vector<bool>& iactive, const doublereal* c) {
         for (size_t i = 0; i != m_rates.size(); i++) {
             // skip if reaction m_rxn[i] is muted
-            if (imuted[m_rxn[i]]) continue;
-            m_rates[i].update_C(c);
+            if (iactive[m_rxn[i]]) m_rates[i].update_C(c);
         }
     }
 
@@ -85,11 +84,11 @@ public:
      * muted flag.
      */
     void update(doublereal T, doublereal logT,
-                const std::vector<bool>& imuted, doublereal* values) {
+                const std::vector<bool>& iactive, doublereal* values) {
         doublereal recipT = 1.0/T;
         for (size_t i = 0; i != m_rates.size(); i++) {
-            values[m_rxn[i]] = (imuted[m_rxn[i]]) ? 0. :
-              m_rates[i].updateRC(logT, recipT);
+            values[m_rxn[i]] =
+              (iactive[m_rxn[i]]) ? m_rates[i].updateRC(logT, recipT) : 0.;
         }
     }
 

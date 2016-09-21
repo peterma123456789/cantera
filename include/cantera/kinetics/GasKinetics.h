@@ -110,7 +110,7 @@ protected:
     vector_fp concm_falloff_values;
     //!@}
 
-    virtual void processFalloffReactions();
+    void processFalloffReactions();
 
     void addThreeBodyReaction(ThreeBodyReaction& r);
     void addFalloffReaction(FalloffReaction& r);

@@ -76,14 +76,14 @@ public:
      * results for all installed falloff functions, in accordance with the
      * muted flag.
      * @param t Temperature [K].
-     * @param imuted muted flag.
+     * @param iactive active flag.
      * @param work Work array. Must be dimensioned at least workSize().
      */
-    void updateTemp(doublereal t, const std::vector<bool>& imuted,
+    void updateTemp(doublereal t, const std::vector<bool>& iactive,
                     doublereal* work) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
-            if (imuted[m_rxn[i]]) continue;
-            m_falloff[i]->updateTemp(t, work + m_offset[i]);
+            if (iactive[m_rxn[i]])
+              m_falloff[i]->updateTemp(t, work + m_offset[i]);
         }
     }
 
@@ -111,22 +111,22 @@ public:
      * replace each entry by the value of the falloff function, in accordance
      * with the muted flag.
      */
-    void pr_to_falloff(doublereal* values, const std::vector<bool>& imuted,
+    void pr_to_falloff(doublereal* values, const std::vector<bool>& iactive,
                        const doublereal* work) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
-            if (imuted[i]) {
-              values[m_rxn[i]] = 0.;
-              continue;
-            }
-            double pr = values[m_rxn[i]];
-            if (m_reactionType[i] == FALLOFF_RXN) {
-                // Pr / (1 + Pr) * F
-                values[m_rxn[i]] *=
-                    m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
+            if (iactive[i]) {
+              double pr = values[m_rxn[i]];
+              if (m_reactionType[i] == FALLOFF_RXN) {
+                  // Pr / (1 + Pr) * F
+                  values[m_rxn[i]] *=
+                      m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
+              } else {
+                  // 1 / (1 + Pr) * F
+                  values[m_rxn[i]] =
+                      m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
+              }
             } else {
-                // 1 / (1 + Pr) * F
-                values[m_rxn[i]] =
-                    m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
+              values[m_rxn[i]] = 0.;
             }
         }
     }
