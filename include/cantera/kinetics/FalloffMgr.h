@@ -79,7 +79,7 @@ public:
      * @param iactive active flag.
      * @param work Work array. Must be dimensioned at least workSize().
      */
-    void updateTemp(doublereal t, const std::vector<bool>& iactive,
+    void updateTemp(doublereal t, const std::vector<std::uint8_t>& iactive,
                     doublereal* work) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
             if (iactive[m_rxn[i]])
@@ -111,7 +111,7 @@ public:
      * replace each entry by the value of the falloff function, in accordance
      * with the muted flag.
      */
-    void pr_to_falloff(doublereal* values, const std::vector<bool>& iactive,
+    void pr_to_falloff(doublereal* values, const std::vector<std::uint8_t>& iactive,
                        const doublereal* work) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
             if (iactive[i]) {

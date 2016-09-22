@@ -40,8 +40,8 @@ public:
   void updateActiveRxns(const double relTol, const double absTol);
 
   // get m_iactive
-  const std::vector<bool>& iActive() { return m_iactive; }
-  
+  const std::vector<std::uint8_t>& iActive() { return m_iactive; }
+
 protected:
   //! pointer to the Kinetics object
   Kinetics* m_kinetics;
@@ -49,7 +49,7 @@ protected:
   size_t m_nRxns;
 
   //! Record of reaction activation
-  std::vector<bool> m_iactive;
+  std::vector<std::uint8_t> m_iactive;
 
   //! Sparse matrices for adaptive chemistry
   //! Stoich. matrix

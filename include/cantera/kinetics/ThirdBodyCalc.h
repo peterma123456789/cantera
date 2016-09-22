@@ -41,7 +41,7 @@ public:
     }
 
     void update(const vector_fp& conc, double ctot,
-                const std::vector<bool>& iactive, double* work) {
+                const std::vector<std::uint8_t>& iactive, double* work) {
         for (size_t i = 0; i < m_species.size(); i++) {
             // skip if m_reaction_index[i]] is muted
             if (iactive[m_reaction_index[i]]) {

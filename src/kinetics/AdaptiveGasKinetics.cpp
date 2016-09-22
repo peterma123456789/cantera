@@ -28,10 +28,13 @@ void AdaptiveGasKinetics::getNetProductionRates(doublereal* net)
 
     fill(net, net + m_kk, 0.0);
     // products are created for positive net rate of progress
-    m_revProductStoich.incrementSpecies(m_ropnet.data(), net);
-    m_irrevProductStoich.incrementSpecies(m_ropnet.data(), net);
+    m_revProductStoich.incrementSpecies(m_active_reactions,
+                                        m_ropnet.data(), net);
+    m_irrevProductStoich.incrementSpecies(m_active_reactions,
+                                          m_ropnet.data(), net);
     // reactants are destroyed for positive net rate of progress
-    m_reactantStoich.decrementSpecies(m_ropnet.data(), net);
+    m_reactantStoich.decrementSpecies(m_active_reactions,
+                                      m_ropnet.data(), net);
 }
 
 void AdaptiveGasKinetics::getNetProductionRatesFull(doublereal* net)
@@ -124,7 +127,7 @@ void AdaptiveGasKinetics::updateKc_adp()
     fill(m_rkcn.begin(), m_rkcn.end(), 0.0);
 
     // compute Delta G^0 for all reversible reactions
-    getRevReactionDelta(m_grt.data(), m_rkcn.data());
+    getRevReactionDelta_adp(m_active_reactions, m_grt.data(), m_rkcn.data());
 
     doublereal rrt = 1.0 / thermo().RT();
     for (size_t i = 0; i < m_revindex.size(); i++) {
@@ -169,10 +172,12 @@ void AdaptiveGasKinetics::updateROP_adp()
     multiply_each(m_ropr.begin(), m_ropr.end(), m_rkcn.begin());
 
     // multiply ropf by concentration products
-    m_reactantStoich.multiply(m_conc.data(), m_ropf.data());
+    m_reactantStoich.multiply(m_active_reactions,
+                              m_conc.data(), m_ropf.data());
 
     // for reversible reactions, multiply ropr by concentration products
-    m_revProductStoich.multiply(m_conc.data(), m_ropr.data());
+    m_revProductStoich.multiply(m_active_reactions,
+                                m_conc.data(), m_ropr.data());
 
     // subtract backward from forward
     for (size_t j = 0; j != nReactions(); ++j) {
@@ -188,6 +193,17 @@ void AdaptiveGasKinetics::updateROP_adp()
                      "m_ropr[{}] is not finite.", i);
     }
     m_ROP_ok = true;
+}
+
+void AdaptiveGasKinetics::getRevReactionDelta_adp(
+  const std::vector<std::uint8_t>& iactive,
+  const double* prop, double* deltaProp)
+{
+  fill(deltaProp, deltaProp + nReactions(), 0.0);
+  // products add
+  m_revProductStoich.incrementReactions(iactive, prop, deltaProp);
+  // reactants subtract
+  m_reactantStoich.decrementReactions(iactive, prop, deltaProp);
 }
 
 void AdaptiveGasKinetics::processFalloffReactions_adp()
@@ -256,7 +272,7 @@ void AdaptiveGasKinetics::updateAdaptation(const double relTol,
 {
   if (!m_ready_rxnactmgr) prepareAdaptation();
   m_rxnactmgr.updateActiveRxns(relTol, absTol);
-  const std::vector<bool>& _iactive = m_rxnactmgr.iActive();
+  const std::vector<std::uint8_t>& _iactive = m_rxnactmgr.iActive();
   AssertThrowMsg(_iactive.size() == nReactions(),
                  "AdaptiveGasKinetics::updateAdaptation",
                  "Size of iActive ({}) does not equal the number of reactions ({}).", _iactive.size(), nReactions());

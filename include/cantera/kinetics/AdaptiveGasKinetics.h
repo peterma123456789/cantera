@@ -40,6 +40,19 @@ public:
   //@}
 
   /**
+   * Given an array of species properties 'g', return in array 'dg' the
+   * change in this quantity in the reversible reactions. Array 'g' must
+   * have a length at least as great as the number of species, and array
+   * 'dg' must have a length as great as the total number of reactions.
+   * This method only computes 'dg' for the reversible reactions, and the
+   * entries of 'dg' for the irreversible reactions are unaltered. This is
+   * primarily designed for use in calculating reverse rate coefficients
+   * from thermochemistry for reversible reactions.
+   */
+  virtual void getRevReactionDelta_adp(const std::vector<std::uint8_t>& iactive,
+                                       const doublereal* g, doublereal* dg);
+
+  /**
    * Species net production rates [kmol/m^3/s or kmol/m^2/s]. Return the
    * species net production rates (creation - destruction) in array wdot,
    * which must be dimensioned at least as large as the total number of
@@ -82,15 +95,20 @@ public:
 
   virtual void setActiveReaction(const size_t i, const bool flag = true);
 
-  virtual const std::vector<bool>& iActiveRractions()
+  virtual const std::vector<std::uint8_t>& iActiveRractions()
     { return m_active_reactions; };
   //@}
 
 protected:
+  //! Note: std::vector<std::uint8_t> is prefered over std::vector<bool> based
+  //! on test performed with clang++ on Mac OSX with Intel i7 cpu.
+  //! One may achieve better results with std::vector<bool> with other
+  //! computational environment.
+  //! 
   //! Vector of flag for reaction muting
-  std::vector<bool> m_active_reactions;
+  std::vector<std::uint8_t> m_active_reactions;
   //! Vector of flag for falloff reaction muting
-  std::vector<bool> m_active_fall;
+  std::vector<std::uint8_t> m_active_fall;
 
   // Reaction activation manager
   RxnActiveMgr m_rxnactmgr;
