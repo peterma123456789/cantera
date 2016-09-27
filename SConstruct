@@ -263,7 +263,7 @@ elif env['CC'] == 'cl': # Visual Studio
     defaults.warningFlags = '/W3'
 
 elif 'icc' in env.subst('$CC'):
-    defaults.cxxFlags = '-std=c++0x'
+    defaults.cxxFlags = '-std=c++11'
     defaults.ccFlags = '-vec-report0 -diag-disable 1478'
     defaults.warningFlags = '-Wcheck'
 
