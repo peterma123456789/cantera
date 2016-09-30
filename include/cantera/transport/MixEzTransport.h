@@ -237,6 +237,11 @@ public:
      */
     virtual void updateLewisNumber();
 
+    //! Reference to Diffusion Coefficient
+    Eigen::VectorXd& rLeDiffCoeffs() { return m_rLeDiffCoeffs; };
+    Eigen::VectorXd& rLeDiffCoeffsMole() { return m_rLeDiffCoeffsMole; };
+    Eigen::VectorXd& rLeDiffCoeffsMass() { return m_rLeDiffCoeffsMass; };
+
 private:
     //! Calculate the pressure from the ideal gas law
     doublereal pressure_ig() const {
