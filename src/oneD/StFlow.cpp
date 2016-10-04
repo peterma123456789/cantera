@@ -23,6 +23,7 @@ StFlow::StFlow(IdealGasPhase* ph, size_t nsp, size_t points) :
     m_epsilon_right(0.0),
     m_do_soret(false),
     m_do_multicomponent(false),
+    m_do_mix_diffmass(false),
     m_do_radiation(false),
     m_kExcessLeft(0),
     m_kExcessRight(0)
@@ -168,6 +169,17 @@ void StFlow::enableSoret(bool withSoret)
         throw CanteraError("setTransport",
                            "Thermal diffusion (the Soret effect) "
                            "requires using a multicomponent transport model.");
+    }
+}
+
+void StFlow::enableDiffMass(bool mix_diffmass)
+{
+    if (!m_do_multicomponent) {
+        m_do_mix_diffmass = mix_diffmass;
+    } else {
+        throw CanteraError("setTransport",
+                           "Mass-gradient based diffusion "
+                           "requires using a mixture-average transport model.");
     }
 }
 
@@ -471,7 +483,10 @@ void StFlow::updateTransport(doublereal* x, size_t j0, size_t j1)
         for (size_t j = j0; j < j1; j++) {
             setGasAtMidpoint(x,j);
             m_visc[j] = (m_dovisc ? m_trans->viscosity() : 0.0);
-            m_trans->getMixDiffCoeffs(&m_diff[j*m_nsp]);
+            if (m_do_mix_diffmass)
+              m_trans->getMixDiffCoeffsMass(&m_diff[j*m_nsp]);
+            else
+              m_trans->getMixDiffCoeffs(&m_diff[j*m_nsp]);
             m_tcon[j] = m_trans->thermalConductivity();
         }
     }
@@ -508,19 +523,36 @@ void StFlow::updateDiffFluxes(const doublereal* x, size_t j0, size_t j1)
             }
         }
     } else {
-        for (size_t j = j0; j < j1; j++) {
-            double sum = 0.0;
-            double wtm = m_wtm[j];
-            double rho = density(j);
-            double dz = z(j+1) - z(j);
-            for (size_t k = 0; k < m_nsp; k++) {
-                m_flux(k,j) = m_wt[k]*(rho*m_diff[k+m_nsp*j]/wtm);
-                m_flux(k,j) *= (X(x,k,j) - X(x,k,j+1))/dz;
-                sum -= m_flux(k,j);
+        if (m_do_mix_diffmass) {
+            for (size_t j = j0; j < j1; j++) {
+                double sum = 0.0;
+                double rho = density(j);
+                double dz = z(j+1) - z(j);
+                for (size_t k = 0; k < m_nsp; k++) {
+                    m_flux(k,j) = (rho*m_diff[k+m_nsp*j]);
+                    m_flux(k,j) *= (Y(x,k,j) - Y(x,k,j+1))/dz;
+                    sum -= m_flux(k,j);
+                }
+                // correction flux to insure that \sum_k Y_k V_k = 0.
+                for (size_t k = 0; k < m_nsp; k++) {
+                    m_flux(k,j) += sum*Y(x,k,j);
+                }
             }
-            // correction flux to insure that \sum_k Y_k V_k = 0.
-            for (size_t k = 0; k < m_nsp; k++) {
-                m_flux(k,j) += sum*Y(x,k,j);
+        } else {
+            for (size_t j = j0; j < j1; j++) {
+                double sum = 0.0;
+                double wtm = m_wtm[j];
+                double rho = density(j);
+                double dz = z(j+1) - z(j);
+                for (size_t k = 0; k < m_nsp; k++) {
+                    m_flux(k,j) = m_wt[k]*(rho*m_diff[k+m_nsp*j]/wtm);
+                    m_flux(k,j) *= (X(x,k,j) - X(x,k,j+1))/dz;
+                    sum -= m_flux(k,j);
+                }
+                // correction flux to insure that \sum_k Y_k V_k = 0.
+                for (size_t k = 0; k < m_nsp; k++) {
+                    m_flux(k,j) += sum*Y(x,k,j);
+                }
             }
         }
     }

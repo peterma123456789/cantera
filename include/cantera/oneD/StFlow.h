@@ -79,6 +79,7 @@ public:
     bool withSoret() const {
         return m_do_soret;
     }
+    void enableDiffMass(bool mix_diffmass);
 
     //! Set the pressure. Since the flow equations are for the limit of small
     //! Mach number, the pressure is very nearly constant throughout the flow.
@@ -341,7 +342,7 @@ protected:
     }
 
     //! Update the diffusive mass fluxes.
-    void updateDiffFluxes(const doublereal* x, size_t j0, size_t j1);
+    virtual void updateDiffFluxes(const doublereal* x, size_t j0, size_t j1);
 
     //---------------------------------------------------------
     //             member data
@@ -390,6 +391,7 @@ protected:
     bool m_do_soret;
     std::vector<bool> m_do_species;
     bool m_do_multicomponent;
+    bool m_do_mix_diffmass;
 
     //! flag for the radiative heat loss
     bool m_do_radiation;
@@ -412,7 +414,7 @@ protected:
 
     //! Update the transport properties at grid points in the range from `j0`
     //! to `j1`, based on solution `x`.
-    void updateTransport(doublereal* x, size_t j0, size_t j1);
+    virtual void updateTransport(doublereal* x, size_t j0, size_t j1);
 
 private:
     vector_fp m_ybar;
@@ -470,7 +472,6 @@ public:
     //! Temperature at the point used to fix the flame location
     doublereal m_tfixed;
 };
-
 }
 
 #endif
