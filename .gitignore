@@ -5,6 +5,7 @@
 *.pyc
 *.obj
 *.exe.manifest
+*.optrpt
 build/
 test/work/
 include/cantera/base/config.h

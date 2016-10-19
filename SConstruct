@@ -264,7 +264,7 @@ elif env['CC'] == 'cl': # Visual Studio
 
 elif 'icc' in env.subst('$CC'):
     defaults.cxxFlags = '-std=c++11'
-    defaults.ccFlags = '-qopt-report1 qopt-report-phase=vec'
+    defaults.ccFlags = '-qopt-report2 -qopt-report-phase=vec'
     defaults.warningFlags = '-Wcheck'
 
 elif 'clang' in env.subst('$CC'):

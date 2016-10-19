@@ -8,7 +8,9 @@
 #include "cantera/thermo/IdealGasPhase.h"
 #include "cantera/thermo/ThermoFactory.h"
 #include "cantera/base/utilities.h"
+#include <Eigen/Core>
 
+using namespace Eigen;
 using namespace std;
 
 namespace Cantera
@@ -316,11 +318,8 @@ void IdealGasPhase::_updateThermo() const
     if (cached.state1 != tnow) {
         m_spthermo->update(tnow, &m_cp0_R[0], &m_h0_RT[0], &m_s0_R[0]);
         cached.state1 = tnow;
-
-        // update the species Gibbs functions
-        for (size_t k = 0; k < m_kk; k++) {
-            m_g0_RT[k] = m_h0_RT[k] - m_s0_R[k];
-        }
+        Map<VectorXd>(m_g0_RT.data(), m_kk) = Map<const VectorXd>(m_h0_RT.data(), m_kk) -
+                                              Map<const VectorXd>(m_s0_R.data(), m_kk);
         m_logc0 = log(m_p0 / RT());
     }
 }
