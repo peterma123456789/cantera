@@ -264,7 +264,7 @@ elif env['CC'] == 'cl': # Visual Studio
 
 elif 'icc' in env.subst('$CC'):
     defaults.cxxFlags = '-std=c++11'
-    defaults.ccFlags = '-vec-report0 -diag-disable 1478'
+    defaults.ccFlags = '-qopt-report1 qopt-report-phase=vec'
     defaults.warningFlags = '-Wcheck'
 
 elif 'clang' in env.subst('$CC'):
@@ -666,7 +666,7 @@ if env['system_sundials'] in ('y','default'):
         env['system_sundials'] = 'y'
 
 if env['eigen_include']:
-    env.Append(CPPPATH=[env['eigen_include']]) 
+    env.Append(CPPPATH=[env['eigen_include']])
     env['system_sundials'] = 'y'
 
 # BLAS / LAPACK configuration
