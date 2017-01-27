@@ -73,22 +73,6 @@ public:
     }
 
     /**
-     * Update the cached temperature-dependent intermediate
-     * results for all installed falloff functions, in accordance with the
-     * muted flag.
-     * @param t Temperature [K].
-     * @param iactive active flag.
-     * @param work Work array. Must be dimensioned at least workSize().
-     */
-    void updateTemp(doublereal t, const std::vector<std::uint8_t>& iactive,
-                    doublereal* work) {
-        for (size_t i = 0; i < m_rxn.size(); i++) {
-            if (iactive[m_rxn[i]])
-              m_falloff[i]->updateTemp(t, work + m_offset[i]);
-        }
-    }
-
-    /**
      * Given a vector of reduced pressures for each falloff reaction,
      * replace each entry by the value of the falloff function.
      */
@@ -103,31 +87,6 @@ public:
                 // 1 / (1 + Pr) * F
                 values[m_rxn[i]] =
                     m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
-            }
-        }
-    }
-
-    /**
-     * Given a vector of reduced pressures for each falloff reaction,
-     * replace each entry by the value of the falloff function, in accordance
-     * with the muted flag.
-     */
-    void pr_to_falloff(doublereal* values, const std::vector<std::uint8_t>& iactive,
-                       const doublereal* work) {
-        for (size_t i = 0; i < m_rxn.size(); i++) {
-            if (iactive[i]) {
-              double pr = values[m_rxn[i]];
-              if (m_reactionType[i] == FALLOFF_RXN) {
-                  // Pr / (1 + Pr) * F
-                  values[m_rxn[i]] *=
-                      m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
-              } else {
-                  // 1 / (1 + Pr) * F
-                  values[m_rxn[i]] =
-                      m_falloff[i]->F(pr, work + m_offset[i]) /(1.0 + pr);
-              }
-            } else {
-              values[m_rxn[i]] = 0.;
             }
         }
     }
