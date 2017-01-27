@@ -1,9 +1,15 @@
 //! @file application.h
+
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #ifndef CT_BASE_APPLICATION_H
 #define CT_BASE_APPLICATION_H
 
 #include "cantera/base/config.h"
 #include "cantera/base/logger.h"
+
+#include <boost/algorithm/string/join.hpp>
 
 #include <set>
 #include <thread>
@@ -184,7 +190,7 @@ protected:
 public:
     //! Return a pointer to the one and only instance of class Application
     /*!
-     * If the an Application object has not yet been created it is created
+     * If the Application object has not yet been created, it is created
      */
     static Application* Instance();
 
@@ -242,7 +248,7 @@ public:
      * above.
      *
      * The default set of directories specified for the application will be
-     * searched if a '/' or an '\\' is found in the name. If either is found
+     * searched if a '/' or an '\\' is not found in the name. If either is found
      * then a relative path name is presumed, and the default directories are
      * not searched.
      *
@@ -260,6 +266,20 @@ public:
      * @ingroup inputfiles
      */
     std::string findInputFile(const std::string& name);
+
+    //! Get the Cantera data directories
+    /*!
+     * This routine returns a string including the names of all the
+     * directories searched by Cantera for data files.
+     *
+     * @param sep Separator to use between directories in the string
+     * @return A string of directories separated by the input sep
+     *
+     * @ingroup inputfiles
+     */
+    std::string getDataDirectories(const std::string& sep) {
+        return boost::algorithm::join(inputDirs, sep);
+    }
 
     //! Return a pointer to the XML tree for a Cantera input file.
     /*!
@@ -324,6 +344,17 @@ public:
         m_fatal_deprecation_warnings = true;
     }
 
+    //! Globally disable printing of warnings about problematic thermo data,
+    //! e.g. NASA polynomials with discontinuities at the midpoint temperature.
+    void suppress_thermo_warnings(bool suppress=true) {
+        m_suppress_thermo_warnings = suppress;
+    }
+
+    //! Returns `true` if thermo warnings should be suppressed.
+    bool thermo_warnings_suppressed() {
+        return m_suppress_thermo_warnings;
+    }
+
     //! @copydoc Messages::setLogger
     void setLogger(Logger* logwriter) {
         pMessenger->setLogger(logwriter);
@@ -380,6 +411,7 @@ protected:
 
     bool m_suppress_deprecation_warnings;
     bool m_fatal_deprecation_warnings;
+    bool m_suppress_thermo_warnings;
 
     ThreadMessages pMessenger;
 

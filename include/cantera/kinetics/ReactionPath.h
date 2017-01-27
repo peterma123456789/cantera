@@ -3,7 +3,8 @@
  *  Classes for reaction path analysis.
  */
 
-// Copyright 2001  California Institute of Technology
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
 
 #ifndef CT_RXNPATH_H
 #define CT_RXNPATH_H
@@ -301,8 +302,6 @@ public:
 
     //! Analyze a reaction to determine which reactants lead to which products.
     int findGroups(std::ostream& logfile, Kinetics& s);
-
-    void writeGroup(std::ostream& out, const Group& g);
 
 protected:
     void findElements(Kinetics& kin);

@@ -24,6 +24,22 @@ TEST(parseCompString, extra_spaces)
     ASSERT_DOUBLE_EQ(1e-4, c["baz"]);
 }
 
+TEST(parseCompString, name_with_colon)
+{
+    compositionMap c = parseCompString("foo: 1.0  co:lon:2,baz: 1e-4");
+    ASSERT_EQ((size_t) 3, c.size());
+    ASSERT_DOUBLE_EQ(1.0, c["foo"]);
+    ASSERT_DOUBLE_EQ(2.0, c["co:lon"]);
+    ASSERT_DOUBLE_EQ(1e-4, c["baz"]);
+}
+
+TEST(parseCompString, name_with_final_colon)
+{
+    compositionMap c = parseCompString("co:lons::1.0");
+    ASSERT_EQ((size_t) 1, c.size());
+    ASSERT_DOUBLE_EQ(1.0, c["co:lons:"]);
+}
+
 TEST(parseCompString, default_values)
 {
     std::vector<std::string> x = { "foo", "bar", "baz" };

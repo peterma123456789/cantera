@@ -1,5 +1,8 @@
 //! @file global.cpp
 
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #include "cantera/base/FactoryBase.h"
 #include "cantera/base/xml.h"
 #include "application.h"
@@ -63,6 +66,16 @@ void make_deprecation_warnings_fatal()
     app()->make_deprecation_warnings_fatal();
 }
 
+void suppress_thermo_warnings(bool suppress)
+{
+    app()->suppress_thermo_warnings(suppress);
+}
+
+bool thermo_warnings_suppressed()
+{
+    return app()->thermo_warnings_suppressed();
+}
+
 // **************** Global Data ****************
 
 Unit* Unit::s_u = 0;
@@ -78,6 +91,15 @@ void appdelete()
 void thread_complete()
 {
     app()->thread_complete();
+}
+
+std::string gitCommit()
+{
+#ifdef GIT_COMMIT
+    return GIT_COMMIT;
+#else
+    return "unknown";
+#endif
 }
 
 XML_Node* get_XML_File(const std::string& file, int debug)
@@ -132,6 +154,11 @@ void setError(const std::string& r, const std::string& msg)
 void addDirectory(const std::string& dir)
 {
     app()->addDataDirectory(dir);
+}
+
+std::string getDataDirectories(const std::string& sep)
+{
+    return app()->getDataDirectories(sep);
 }
 
 std::string findInputFile(const std::string& name)
