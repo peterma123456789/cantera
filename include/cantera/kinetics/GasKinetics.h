@@ -17,6 +17,8 @@
 namespace Cantera
 {
 
+class RxnActivEdt;
+
 /**
  * Kinetics manager for elementary gas-phase chemistry. This kinetics manager
  * implements standard mass-action reaction rate expressions for low-density
@@ -25,6 +27,7 @@ namespace Cantera
  */
 class GasKinetics : public BulkKinetics
 {
+friend class RxnActivEdt;
 public:
     //! @name Constructors and General Information
     //! @{

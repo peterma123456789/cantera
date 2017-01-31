@@ -13,6 +13,8 @@
 namespace Cantera
 {
 
+class RxnActivEdt;
+
 /**
  * This rate coefficient manager supports one parameterization of
  * the rate constant of any type.
@@ -20,6 +22,7 @@ namespace Cantera
 template<class R>
 class Rate1
 {
+friend class RxnActivEdt;
 public:
     Rate1() {}
     virtual ~Rate1() {}

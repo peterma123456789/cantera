@@ -14,10 +14,13 @@
 namespace Cantera
 {
 
+class RxnActivEdt;
+
 //! Calculate and apply third-body effects on reaction rates, including non-
 //! unity third-body efficiencies.
 class ThirdBodyCalc
 {
+friend class RxnActivEdt;
 public:
     void install(size_t rxnNumber, const std::map<size_t, double>& enhanced,
                  double dflt=1.0) {

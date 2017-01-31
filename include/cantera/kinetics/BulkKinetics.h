@@ -12,57 +12,87 @@
 #include "Kinetics.h"
 #include "RateCoeffMgr.h"
 
-namespace Cantera
-{
+namespace Cantera {
 
 class ElementaryReaction;
+class RxnActivEdt;
 
 //! Partial specialization of Kinetics for chemistry in a single bulk phase
-class BulkKinetics : public Kinetics
-{
+class BulkKinetics : public Kinetics {
 public:
-    BulkKinetics(thermo_t* thermo = 0);
-    virtual Kinetics* duplMyselfAsKinetics(const std::vector<thermo_t*> & tpVector) const;
+  friend class RxnActivEdt;
+  BulkKinetics(thermo_t *thermo = 0);
 
-    virtual bool isReversible(size_t i);
+  template <typename T>
+  BulkKinetics(const BulkKinetics &, const std::vector<T> &);
 
-    virtual void getDeltaGibbs(doublereal* deltaG);
-    virtual void getDeltaEnthalpy(doublereal* deltaH);
-    virtual void getDeltaEntropy(doublereal* deltaS);
+  virtual Kinetics *
+  duplMyselfAsKinetics(const std::vector<thermo_t *> &tpVector) const;
 
-    virtual void getDeltaSSGibbs(doublereal* deltaG);
-    virtual void getDeltaSSEnthalpy(doublereal* deltaH);
-    virtual void getDeltaSSEntropy(doublereal* deltaS);
+  virtual bool isReversible(size_t i);
 
-    virtual void getRevRateConstants(doublereal* krev,
-                                     bool doIrreversible = false);
+  virtual void getDeltaGibbs(doublereal *deltaG);
+  virtual void getDeltaEnthalpy(doublereal *deltaH);
+  virtual void getDeltaEntropy(doublereal *deltaS);
 
-    virtual bool addReaction(shared_ptr<Reaction> r);
-    virtual void resizeSpecies();
+  virtual void getDeltaSSGibbs(doublereal *deltaG);
+  virtual void getDeltaSSEnthalpy(doublereal *deltaH);
+  virtual void getDeltaSSEntropy(doublereal *deltaS);
 
-    virtual void setMultiplier(size_t i, double f);
-    virtual void invalidateCache();
+  virtual void getRevRateConstants(doublereal *krev,
+                                   bool doIrreversible = false);
+
+  virtual bool addReaction(shared_ptr<Reaction> r);
+  virtual void resizeSpecies();
+
+  virtual void setMultiplier(size_t i, double f);
+  virtual void invalidateCache();
 
 protected:
-    virtual void addElementaryReaction(ElementaryReaction& r);
-    virtual void modifyElementaryReaction(size_t i, ElementaryReaction& rNew);
+  virtual void addElementaryReaction(ElementaryReaction &r);
+  virtual void modifyElementaryReaction(size_t i, ElementaryReaction &rNew);
 
-    Rate1<Arrhenius> m_rates;
-    std::vector<size_t> m_revindex; //!< Indices of reversible reactions
-    std::vector<size_t> m_irrev; //!< Indices of irreversible reactions
+  Rate1<Arrhenius> m_rates;
+  std::vector<size_t> m_revindex; //!< Indices of reversible reactions
+  std::vector<size_t> m_irrev;    //!< Indices of irreversible reactions
 
-    //! Difference between the global reactants order and the global products
-    //! order. Of type "double" to account for the fact that we can have real-
-    //! valued stoichiometries.
-    vector_fp m_dn;
+  //! Difference between the global reactants order and the global products
+  //! order. Of type "double" to account for the fact that we can have real-
+  //! valued stoichiometries.
+  vector_fp m_dn;
 
-    vector_fp m_conc;
-    vector_fp m_grt;
+  vector_fp m_conc;
+  vector_fp m_grt;
 
-    bool m_ROP_ok;
-    doublereal m_temp;
+  bool m_ROP_ok;
+  doublereal m_temp;
 };
 
+template <typename T>
+BulkKinetics::BulkKinetics(const BulkKinetics &right,
+                           const std::vector<T> &iactive)
+    : Kinetics(right, iactive), m_ROP_ok(false), m_temp(0.0) {
+  editRates(m_revindex, right.m_revindex, iactive);
+
+  // reactions
+  // prepare _nActive, _idList, and _idMap
+  size_t _nActive = 0;
+  for (const auto i : iactiv)
+    _nActive += i;
+  std::vector<size_t> _idList(_nActive);
+  auto it = _idList.begin();
+  for (size_t i = 0; i < iactiv.size(); ++i) {
+    *it = i;
+    it += iactiv[i];
+  }
+  std::vector<size_t> _idMap(iactiv.size(), 0);
+  for (size_t i = 1; i < _idMap.size(); i++)
+    _idMap[i] = _idMap[i - 1] + iactiv[i - 1];
+
+  std::vector<size_t> m_revindex; //!< Indices of reversible reactions
+  std::vector<size_t> m_irrev;    //!< Indices of irreversible reactions
+  vector_fp m_dn;
+}
 }
 
 #endif

@@ -6,8 +6,10 @@
 // at http://www.cantera.org/license.txt for license and copyright information.
 
 #include "cantera/kinetics/GasKinetics.h"
+#include "cantera/numerics/eigen_dense.h"
 
 using namespace std;
+using namespace Eigen;
 
 namespace Cantera
 {
@@ -36,14 +38,18 @@ void GasKinetics::update_rates_T()
 
     if (T != m_temp) {
         if (!m_rfn.empty()) {
+            std::fill(m_rfn.begin(), m_rfn.end(), 0.0);
             m_rates.update(T, logT, m_rfn.data());
         }
 
         if (!m_rfn_low.empty()) {
+            std::fill(m_rfn_low.begin(), m_rfn_low.end(), 0.0);
+            std::fill(m_rfn_high.begin(), m_rfn_high.end(), 0.0);
             m_falloff_low_rates.update(T, logT, m_rfn_low.data());
             m_falloff_high_rates.update(T, logT, m_rfn_high.data());
         }
         if (!falloff_work.empty()) {
+            std::fill(falloff_work.begin(), falloff_work.end(), 0.0);
             m_falloffn.updateTemp(T, falloff_work.data());
         }
         updateKc();
@@ -139,15 +145,18 @@ void GasKinetics::processFalloffReactions()
     // use m_ropr for temporary storage of reduced pressure
     vector_fp& pr = m_ropr;
 
-    for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
+    for (size_t i = 0; i < m_rfn_low.size(); i++) {
+        pr[i] = m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
+    }
+    m_falloff_concm.multiply(pr.data(), concm_falloff_values.data());
+    for (size_t i = 0; i < m_rfn_low.size(); i++) {
         AssertFinite(pr[i], "GasKinetics::processFalloffReactions",
                      "pr[{}] is not finite.", i);
     }
 
     m_falloffn.pr_to_falloff(pr.data(), falloff_work.data());
 
-    for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+    for (size_t i = 0; i < m_rfn_low.size(); i++) {
         if (reactionType(m_fallindx[i]) == FALLOFF_RXN) {
             pr[i] *= m_rfn_high[i];
         } else { // CHEMACT_RXN
@@ -155,7 +164,7 @@ void GasKinetics::processFalloffReactions()
         }
     }
 
-    scatter_copy(pr.begin(), pr.begin() + m_falloff_low_rates.nReactions(),
+    scatter_copy(pr.begin(), pr.begin() + m_rfn_low.size(),
                  m_ropf.begin(), m_fallindx.begin());
 }
 
@@ -169,25 +178,26 @@ void GasKinetics::updateROP()
 
     // copy rate coefficients into ropf
     m_ropf = m_rfn;
-
     // multiply ropf by enhanced 3b conc for all 3b rxns
     if (!concm_3b_values.empty()) {
         m_3b_concm.multiply(m_ropf.data(), concm_3b_values.data());
     }
-
     if (m_falloff_high_rates.nReactions()) {
         processFalloffReactions();
     }
-
     // multiply by perturbation factor
-    multiply_each(m_ropf.begin(), m_ropf.end(), m_perturb.begin());
+    // multiply_each(m_ropf.begin(), m_ropf.end(), m_perturb.begin());
+    Map<ArrayXd>(m_ropf.data(), m_ropf.size())
+      *= Map<ArrayXd>(m_perturb.data(), m_ropf.size()).array();
 
     // copy the forward rates to the reverse rates
     m_ropr = m_ropf;
 
     // for reverse rates computed from thermochemistry, multiply the forward
     // rates copied into m_ropr by the reciprocals of the equilibrium constants
-    multiply_each(m_ropr.begin(), m_ropr.end(), m_rkcn.begin());
+    // multiply_each(m_ropr.begin(), m_ropr.end(), m_rkcn.begin());
+    Map<ArrayXd>(m_ropr.data(), m_ropr.size())
+      *= Map<const ArrayXd>(m_rkcn.data(), m_ropf.size()).array();
 
     // multiply ropf by concentration products
     m_reactantStoich.multiply(m_conc.data(), m_ropf.data());
@@ -195,9 +205,12 @@ void GasKinetics::updateROP()
     // for reversible reactions, multiply ropr by concentration products
     m_revProductStoich.multiply(m_conc.data(), m_ropr.data());
 
-    for (size_t j = 0; j != nReactions(); ++j) {
-        m_ropnet[j] = m_ropf[j] - m_ropr[j];
-    }
+    // for (size_t j = 0; j != nReactions(); ++j) {
+    //     m_ropnet[j] = m_ropf[j] - m_ropr[j];
+    // }
+    Map<VectorXd>(m_ropnet.data(), nReactions()).noalias()
+      = Map<const VectorXd>(m_ropf.data(), nReactions())
+      - Map<const VectorXd>(m_ropr.data(), nReactions());
 
     for (size_t i = 0; i < m_rfn.size(); i++) {
         AssertFinite(m_rfn[i], "GasKinetics::updateROP",

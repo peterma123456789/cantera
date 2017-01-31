@@ -15,12 +15,15 @@
 namespace Cantera
 {
 
+class RxnActivEdt;
+
 /**
  *  A falloff manager that implements any set of falloff functions.
  *  @ingroup falloffGroup
  */
 class FalloffMgr
 {
+friend class RxnActivEdt;
 public:
     //! Constructor.
     FalloffMgr() :

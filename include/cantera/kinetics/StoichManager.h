@@ -14,6 +14,8 @@
 namespace Cantera
 {
 
+class RxnActivEdt;
+
 /**
  * @defgroup Stoichiometry Stoichiometry
  *
@@ -128,6 +130,7 @@ namespace Cantera
  */
 class C1
 {
+friend class RxnActivEdt;
 public:
     C1(size_t rxn = 0, size_t ic0 = 0) :
         m_rxn(rxn),
@@ -140,33 +143,33 @@ public:
         return m_rxn;
     }
 
-    void incrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void incrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] += R[m_rxn];
     }
 
-    void decrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void decrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] -= R[m_rxn];
     }
 
-    void multiply(const doublereal* S, doublereal* R) const {
+    inline void multiply(const doublereal* S, doublereal* R) const {
         R[m_rxn] *= S[m_ic0];
     }
 
-    void incrementReaction(const doublereal* S, doublereal* R) const {
+    inline void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0];
     }
 
-    void decrementReaction(const doublereal* S, doublereal* R) const {
+    inline void decrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] -= S[m_ic0];
     }
 
-    size_t rxnNumber() const {
+    inline size_t rxnNumber() const {
         return m_rxn;
     }
-    size_t speciesIndex(size_t n) const {
+    inline size_t speciesIndex(size_t n) const {
         return m_ic0;
     }
-    size_t nSpecies() {
+    inline size_t nSpecies() {
         return 1;
     }
 
@@ -184,28 +187,29 @@ private:
  */
 class C2
 {
+friend class RxnActivEdt;
 public:
     C2(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1) {}
 
-    size_t data(std::vector<size_t>& ic) {
+    inline size_t data(std::vector<size_t>& ic) {
         ic.resize(2);
         ic[0] = m_ic0;
         ic[1] = m_ic1;
         return m_rxn;
     }
 
-    void incrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void incrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] += R[m_rxn];
         S[m_ic1] += R[m_rxn];
     }
 
-    void decrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void decrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] -= R[m_rxn];
         S[m_ic1] -= R[m_rxn];
     }
 
-    void multiply(const doublereal* S, doublereal* R) const {
+    inline void multiply(const doublereal* S, doublereal* R) const {
         if (S[m_ic0] < 0 && S[m_ic1] < 0) {
             R[m_rxn] = 0;
         } else {
@@ -213,21 +217,21 @@ public:
         }
     }
 
-    void incrementReaction(const doublereal* S, doublereal* R) const {
+    inline void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0] + S[m_ic1];
     }
 
-    void decrementReaction(const doublereal* S, doublereal* R) const {
+    inline void decrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] -= (S[m_ic0] + S[m_ic1]);
     }
 
-    size_t rxnNumber() const {
+    inline size_t rxnNumber() const {
         return m_rxn;
     }
-    size_t speciesIndex(size_t n) const {
+    inline size_t speciesIndex(size_t n) const {
         return (n == 0 ? m_ic0 : m_ic1);
     }
-    size_t nSpecies() {
+    inline size_t nSpecies() {
         return 2;
     }
 
@@ -246,6 +250,7 @@ private:
  */
 class C3
 {
+friend class RxnActivEdt;
 public:
     C3(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0, size_t ic2 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1), m_ic2(ic2) {}
@@ -312,6 +317,7 @@ private:
  */
 class C_AnyN
 {
+friend class RxnActivEdt;
 public:
     C_AnyN() :
         m_n(0),
@@ -394,6 +400,9 @@ public:
         }
     }
 
+    size_t rxnNumber() const {
+        return m_rxn;
+    }
 private:
     //! Length of the m_ic vector
     /*!
@@ -520,6 +529,9 @@ inline static void _decrementReactions(InputIter begin,
  */
 class StoichManagerN
 {
+
+friend class RxnActivEdt;
+
 public:
     /**
      * Constructor for the StoichManagerN class.
