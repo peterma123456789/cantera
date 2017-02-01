@@ -125,8 +125,6 @@ public:
   //!     classes derived from Kinetics.
   Kinetics &operator=(const Kinetics &right);
 
-  template <typename T> Kinetics(const Kinetics &, const std::vector<T> &);
-
   //! Duplication routine for objects which inherit from Kinetics
   /*!
    *  This function can be used to duplicate objects derived from Kinetics
@@ -967,50 +965,6 @@ protected:
   bool m_skipUndeclaredThirdBodies;
 };
 
-template <typename T>
-Kinetics::Kinetics(const Kinetics &right, const std::vector<T> &iactiv)
-    : m_kk(0), m_thermo(0), m_surfphase(npos), m_rxnphase(npos), m_mindim(4),
-      m_skipUndeclaredSpecies(right.m_skipUndeclaredSpecies),
-      m_skipUndeclaredThirdBodies(false) {
-
-  assert(iactiv.size() == right.nReactions())
-      // phase
-      m_thermo = right.m_thermo; // DANGER -> shallow pointer copy
-  m_mindim = right.m_mindim;
-  m_rxnphase = right.m_rxnphase;
-  m_phaseindex = right.m_phaseindex;
-  m_surfphase = right.m_surfphase;
-
-  // reactions
-  // prepare _nActive, _idList, and _idMap
-  size_t _nActive = 0;
-  for (const auto i : iactiv)
-    _nActive += i;
-  std::vector<size_t> _idList(_nActive);
-  auto it = _idList.begin();
-  for (size_t i = 0; i < iactiv.size(); ++i) {
-    *it = i;
-    it += iactiv[i];
-  }
-  std::vector<size_t> _idMap(iactiv.size(), 0);
-  for (size_t i = 1; i < _idMap.size(); i++)
-    _idMap[i] = _idMap[i - 1] + iactiv[i - 1];
-  // make rop vectors
-  m_rfn = vector_fp(_nActive, 0.0);
-  m_rkcn = vector_fp(_nActive, 0.0);
-  m_ropf = vector_fp(_nActive, 0.0);
-  m_ropr = vector_fp(_nActive, 0.0);
-  m_ropnet = vector_fp(_nActive, 0.0);
-  m_perturb = vector_fp(_nActive, 0.0);
-  // make m_reactions
-  RxnActivEdt::editRxns(m_reactions, right.m_reactions, iactiv);
-  // make m_reactantStoich, m_revProductStoich, and m_irrevProductStoich
-  editStoichMng(m_reactantStoich, right.m_reactantStoich, _iactiv, _idMap);
-  editStoichMng(m_revProductStoich, right.m_revProductStoich, _iactiv, _idMap);
-  editStoichMng(m_irrevProductStoich, right.m_irrevProductStoich, _iactiv,
-                _idMap);
-  resizeSpecies();
-}
 }
 
 #endif

@@ -15,16 +15,11 @@
 namespace Cantera {
 
 class ElementaryReaction;
-class RxnActivEdt;
 
 //! Partial specialization of Kinetics for chemistry in a single bulk phase
 class BulkKinetics : public Kinetics {
 public:
-  friend class RxnActivEdt;
   BulkKinetics(thermo_t *thermo = 0);
-
-  template <typename T>
-  BulkKinetics(const BulkKinetics &, const std::vector<T> &);
 
   virtual Kinetics *
   duplMyselfAsKinetics(const std::vector<thermo_t *> &tpVector) const;
@@ -68,31 +63,6 @@ protected:
   doublereal m_temp;
 };
 
-template <typename T>
-BulkKinetics::BulkKinetics(const BulkKinetics &right,
-                           const std::vector<T> &iactive)
-    : Kinetics(right, iactive), m_ROP_ok(false), m_temp(0.0) {
-  editRates(m_revindex, right.m_revindex, iactive);
-
-  // reactions
-  // prepare _nActive, _idList, and _idMap
-  size_t _nActive = 0;
-  for (const auto i : iactiv)
-    _nActive += i;
-  std::vector<size_t> _idList(_nActive);
-  auto it = _idList.begin();
-  for (size_t i = 0; i < iactiv.size(); ++i) {
-    *it = i;
-    it += iactiv[i];
-  }
-  std::vector<size_t> _idMap(iactiv.size(), 0);
-  for (size_t i = 1; i < _idMap.size(); i++)
-    _idMap[i] = _idMap[i - 1] + iactiv[i - 1];
-
-  std::vector<size_t> m_revindex; //!< Indices of reversible reactions
-  std::vector<size_t> m_irrev;    //!< Indices of irreversible reactions
-  vector_fp m_dn;
-}
 }
 
 #endif
