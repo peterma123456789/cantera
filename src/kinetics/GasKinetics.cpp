@@ -45,18 +45,15 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   // reactions
   // prepare _nActive, _idList, and _idMap
   size_t _nActive = 0;
-  for (const auto i : iActiv)
-    _nActive += i;
+  for (const auto i : iActiv) _nActive += (size_t) i;
   std::vector<size_t> _idList(_nActive);
   if (_nActive > 0) {
-    auto it = _idList.begin();
-    for (size_t i = 0; i < iActiv.size(); ++i) {
-      *it = i;
-      it += iActiv[i];
+    for (size_t i = 0, j = 0; i < iActiv.size(); ++i) {
+      if (iActiv[i]) _idList[j++] = i;
     }
   }
   std::vector<size_t> _idMap(iActiv.size(), 0);
-  for (size_t i = 1; i < _idMap.size(); i++)
+  for (size_t i = 1; i < _idMap.size(); ++i)
     _idMap[i] = _idMap[i - 1] + iActiv[i - 1];
   // make rop vectors
   m_rfn = vector_fp(_nActive, 0.0);
@@ -90,6 +87,7 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   // make THREE_BODY_RXN
   RxnActivEdt::editThirdBody(m_3b_concm, right.m_3b_concm, iActiv, _idMap);
   concm_3b_values.resize(m_3b_concm.workSize());
+
   // make FALLOFF_RXN/CHEMACT_RXN
   // prepare _nActiveFallOff, _idListFallOff, and _idMapFallOff
   std::vector<std::uint8_t> iActivFallOff(right.m_fallindx.size());
@@ -101,19 +99,14 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
     _nActiveFallOff += i;
   std::vector<size_t> _idListFallOff(_nActiveFallOff);
   if (_nActiveFallOff > 0) {
-    auto it = _idListFallOff.begin();
-    for (size_t i = 0; i < iActivFallOff.size(); ++i) {
-      *it = i;
-      it += iActivFallOff[i];
+    for (size_t i = 0, j = 0; i < iActivFallOff.size(); ++i) {
+      if (iActivFallOff[i]) _idListFallOff[j++] = i;
     }
   }
   std::vector<size_t> _idMapFallOff(iActivFallOff.size(), 0);
   for (size_t i = 1; i < _idMapFallOff.size(); i++)
     _idMapFallOff[i] = _idMapFallOff[i - 1] + iActivFallOff[i - 1];
-  RxnActivEdt::editRates(m_falloff_high_rates, right.m_falloff_high_rates,
-                         iActivFallOff, _idMapFallOff);
-  RxnActivEdt::editRates(m_falloff_low_rates, right.m_falloff_low_rates,
-                         iActivFallOff, _idMapFallOff);
+
   m_rfn_high = vector_fp(_nActiveFallOff, 0.);
   m_rfn_low = vector_fp(_nActiveFallOff, 0.);
   m_fallindx.resize(_nActiveFallOff);
@@ -122,6 +115,11 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   m_rfallindx.clear();
   for (size_t i = 0; i < _nActiveFallOff; i++)
     m_rfallindx[_idMap[right.m_fallindx[_idListFallOff[i]]]] = i;
+
+  RxnActivEdt::editRates(m_falloff_high_rates, right.m_falloff_high_rates,
+                         iActivFallOff, _idMapFallOff);
+  RxnActivEdt::editRates(m_falloff_low_rates, right.m_falloff_low_rates,
+                         iActivFallOff, _idMapFallOff);
   RxnActivEdt::editThirdBody(m_falloff_concm, right.m_falloff_concm,
                              iActivFallOff, _idMapFallOff);
   concm_falloff_values.resize(m_falloff_concm.workSize());
