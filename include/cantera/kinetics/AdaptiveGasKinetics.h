@@ -12,7 +12,7 @@
 #include "ThirdBodyCalc.h"
 #include "FalloffMgr.h"
 #include "Reaction.h"
-#include "RxnActivMgr.h"
+#include "RxnActiveMgr.h"
 
 namespace Cantera
 {
@@ -93,9 +93,9 @@ public:
   //! Update adaptation manager
   void updateAdaptation(const double relTol = 1e-6, const double absTol = 1e-8);
 
-  virtual void setActivReaction(const size_t i, const bool flag = true);
+  virtual void setActiveReaction(const size_t i, const bool flag = true);
 
-  virtual const std::vector<std::uint8_t>& iActivRractions()
+  virtual const std::vector<std::uint8_t>& iActiveRractions()
     { return m_active_reactions; };
   //@}
 
@@ -111,7 +111,7 @@ protected:
   std::vector<std::uint8_t> m_active_fall;
 
   // Reaction activation manager
-  RxnActivMgr m_rxnactmgr;
+  RxnActiveMgr m_rxnactmgr;
   bool m_ready_rxnactmgr;
 
   void processFalloffReactions_adp();

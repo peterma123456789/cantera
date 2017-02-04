@@ -14,7 +14,7 @@
 namespace Cantera
 {
 
-class RxnActivEdt;
+class RxnActiveEdt;
 
 /**
  * @defgroup Stoichiometry Stoichiometry
@@ -130,7 +130,7 @@ class RxnActivEdt;
  */
 class C1
 {
-friend class RxnActivEdt;
+friend class RxnActiveEdt;
 public:
     C1(size_t rxn = 0, size_t ic0 = 0) :
         m_rxn(rxn),
@@ -187,7 +187,7 @@ private:
  */
 class C2
 {
-friend class RxnActivEdt;
+friend class RxnActiveEdt;
 public:
     C2(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1) {}
@@ -250,7 +250,7 @@ private:
  */
 class C3
 {
-friend class RxnActivEdt;
+friend class RxnActiveEdt;
 public:
     C3(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0, size_t ic2 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1), m_ic2(ic2) {}
@@ -317,7 +317,7 @@ private:
  */
 class C_AnyN
 {
-friend class RxnActivEdt;
+friend class RxnActiveEdt;
 public:
     C_AnyN() :
         m_n(0),
@@ -530,7 +530,7 @@ inline static void _decrementReactions(InputIter begin,
 class StoichManagerN
 {
 
-friend class RxnActivEdt;
+friend class RxnActiveEdt;
 
 public:
     /**

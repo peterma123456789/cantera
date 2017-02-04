@@ -6,7 +6,7 @@
 // at http://www.cantera.org/license.txt for license and copyright information.
 
 #include "cantera/kinetics/GasKinetics.h"
-#include "cantera/kinetics/RxnActivEdt.h"
+#include "cantera/kinetics/RxnActiveEdt.h"
 #include "cantera/numerics/eigen_dense.h"
 
 using namespace std;
@@ -64,28 +64,28 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   m_perturb = vector_fp(_nActive, 1.0);
 
   // make m_reactions
-  RxnActivEdt::editVecs(m_reactions, right.m_reactions, _idList);
+  RxnActiveEdt::editVecs(m_reactions, right.m_reactions, _idList);
   // make m_reactantStoich, m_revProductStoich, and m_irrevProductStoich
-  RxnActivEdt::editStoichMng(m_reactantStoich, right.m_reactantStoich, iActiv,
+  RxnActiveEdt::editStoichMng(m_reactantStoich, right.m_reactantStoich, iActiv,
                              _idMap);
-  RxnActivEdt::editStoichMng(m_revProductStoich, right.m_revProductStoich,
+  RxnActiveEdt::editStoichMng(m_revProductStoich, right.m_revProductStoich,
                              iActiv, _idMap);
-  RxnActivEdt::editStoichMng(m_irrevProductStoich, right.m_irrevProductStoich,
+  RxnActiveEdt::editStoichMng(m_irrevProductStoich, right.m_irrevProductStoich,
                              iActiv, _idMap);
   // make m_revindex, m_irrev
-  RxnActivEdt::editRevs(m_revindex, m_irrev, right.m_revindex, right.m_irrev,
+  RxnActiveEdt::editRevs(m_revindex, m_irrev, right.m_revindex, right.m_irrev,
                         iActiv, _idMap);
   // make m_dn
-  RxnActivEdt::editVecs(m_dn, right.m_dn, _idList);
+  RxnActiveEdt::editVecs(m_dn, right.m_dn, _idList);
   // make m_rates
-  RxnActivEdt::editRates(m_rates, right.m_rates, iActiv, _idMap);
+  RxnActiveEdt::editRates(m_rates, right.m_rates, iActiv, _idMap);
 
   // make PLOG_RXN
-  RxnActivEdt::editRates(m_plog_rates, right.m_plog_rates, iActiv, _idMap);
+  RxnActiveEdt::editRates(m_plog_rates, right.m_plog_rates, iActiv, _idMap);
   // make CHEBYSHEV_RXN
-  RxnActivEdt::editRates(m_cheb_rates, right.m_cheb_rates, iActiv, _idMap);
+  RxnActiveEdt::editRates(m_cheb_rates, right.m_cheb_rates, iActiv, _idMap);
   // make THREE_BODY_RXN
-  RxnActivEdt::editThirdBody(m_3b_concm, right.m_3b_concm, iActiv, _idMap);
+  RxnActiveEdt::editThirdBody(m_3b_concm, right.m_3b_concm, iActiv, _idMap);
   concm_3b_values.resize(m_3b_concm.workSize());
 
   // make FALLOFF_RXN/CHEMACT_RXN
@@ -116,14 +116,14 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   for (size_t i = 0; i < _nActiveFallOff; i++)
     m_rfallindx[_idMap[right.m_fallindx[_idListFallOff[i]]]] = i;
 
-  RxnActivEdt::editRates(m_falloff_high_rates, right.m_falloff_high_rates,
+  RxnActiveEdt::editRates(m_falloff_high_rates, right.m_falloff_high_rates,
                          iActivFallOff, _idMapFallOff);
-  RxnActivEdt::editRates(m_falloff_low_rates, right.m_falloff_low_rates,
+  RxnActiveEdt::editRates(m_falloff_low_rates, right.m_falloff_low_rates,
                          iActivFallOff, _idMapFallOff);
-  RxnActivEdt::editThirdBody(m_falloff_concm, right.m_falloff_concm,
+  RxnActiveEdt::editThirdBody(m_falloff_concm, right.m_falloff_concm,
                              iActivFallOff, _idMapFallOff);
   concm_falloff_values.resize(m_falloff_concm.workSize());
-  RxnActivEdt::editFalloff(m_falloffn, right.m_falloffn, _idListFallOff);
+  RxnActiveEdt::editFalloff(m_falloffn, right.m_falloffn, _idListFallOff);
   falloff_work.resize(m_falloffn.workSize());
 }
 
