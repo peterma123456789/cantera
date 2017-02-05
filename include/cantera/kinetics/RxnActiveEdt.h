@@ -4,7 +4,7 @@
  */
 
 // Copyright 2016  Hao Wu (wuhao@stanford.edu)
-// #define CT_FAST_CHEM
+#define CT_FAST_CHEM
 
 #ifndef CT_RXNACTIVDT_H
 #define CT_RXNACTIVDT_H
