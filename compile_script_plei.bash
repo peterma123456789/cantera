@@ -1,10 +1,10 @@
 #! /bin/bash
 # Need to build SUNDIALS with -fPIC and set(CMAKE_MACOSX_RPATH 1)
-export CANTERA_DIR=/u/hwu8/Code/Cantera_CharlesX/2.3.0
-export SUN_INCLUDE=/u/hwu8/Library/sundials/2.6.2/include
-export SUN_LIB=/u/hwu8/Library/sundials/2.6.2/lib
+export CANTERA_DIR=/nobackup/cma3/local/cantera/2.3.0
+export SUN_INCLUDE=/nobackup/cma3/local/sundials/2.7.0/include
+export SUN_LIB=/nobackup/cma3/local/sundials/2.7.0/lib
 export BOOST_DIR=/nasa/boost/1.50.0//include
-export EIGEN_INCLUDE=/u/hwu8/Library/eigen/3.3-rc1/
+export EIGEN_INCLUDE=/nobackup/cma3/local/eigen/3.3.2/eigen/
 
 scons -j20 build prefix=$CANTERA_DIR \
   CXX=icpc CC=icc FORTRAN=ifort python_package=full \
