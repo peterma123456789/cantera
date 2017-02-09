@@ -2,7 +2,8 @@
  *  @file StoichManager.h
  */
 
-// Copyright 2001  California Institute of Technology
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
 
 #ifndef CT_STOICH_MGR_H
 #define CT_STOICH_MGR_H
@@ -12,6 +13,8 @@
 
 namespace Cantera
 {
+
+class RxnActiveEdt;
 
 /**
  * @defgroup Stoichiometry Stoichiometry
@@ -119,15 +122,6 @@ namespace Cantera
  * identical species are treated as involving separate species.
  */
 
-static doublereal ppow(doublereal x, doublereal order)
-{
-    if (x > 0.0) {
-        return std::pow(x, order);
-    } else {
-        return 0.0;
-    }
-}
-
 /**
  * Handles one species in a reaction.
  * See @ref Stoichiometry
@@ -136,6 +130,7 @@ static doublereal ppow(doublereal x, doublereal order)
  */
 class C1
 {
+friend class RxnActiveEdt;
 public:
     C1(size_t rxn = 0, size_t ic0 = 0) :
         m_rxn(rxn),
@@ -148,63 +143,33 @@ public:
         return m_rxn;
     }
 
-    void incrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void incrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] += R[m_rxn];
     }
 
-    void incrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
-        S[m_ic0] += R[m_rxn];
-    }
-
-    void decrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void decrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] -= R[m_rxn];
     }
 
-    void decrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
-        S[m_ic0] -= R[m_rxn];
-    }
-
-    void multiply(const doublereal* S, doublereal* R) const {
+    inline void multiply(const doublereal* S, doublereal* R) const {
         R[m_rxn] *= S[m_ic0];
     }
 
-    void multiply(const std::vector<std::uint8_t>& iactive,
-                  const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] *= S[m_ic0];
-    }
-
-    void incrementReaction(const doublereal* S, doublereal* R) const {
+    inline void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0];
     }
 
-    void incrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] += S[m_ic0];
-    }
-
-    void decrementReaction(const doublereal* S, doublereal* R) const {
+    inline void decrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] -= S[m_ic0];
     }
 
-    void decrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] -= S[m_ic0];
-    }
-
-    size_t rxnNumber() const {
+    inline size_t rxnNumber() const {
         return m_rxn;
     }
-    size_t speciesIndex(size_t n) const {
+    inline size_t speciesIndex(size_t n) const {
         return m_ic0;
     }
-    size_t nSpecies() {
+    inline size_t nSpecies() {
         return 1;
     }
 
@@ -222,42 +187,29 @@ private:
  */
 class C2
 {
+friend class RxnActiveEdt;
 public:
     C2(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1) {}
 
-    size_t data(std::vector<size_t>& ic) {
+    inline size_t data(std::vector<size_t>& ic) {
         ic.resize(2);
         ic[0] = m_ic0;
         ic[1] = m_ic1;
         return m_rxn;
     }
 
-    void incrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void incrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] += R[m_rxn];
         S[m_ic1] += R[m_rxn];
     }
 
-    void incrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
-        S[m_ic0] += R[m_rxn];
-        S[m_ic1] += R[m_rxn];
-    }
-
-    void decrementSpecies(const doublereal* R, doublereal* S) const {
+    inline void decrementSpecies(const doublereal* R, doublereal* S) const {
         S[m_ic0] -= R[m_rxn];
         S[m_ic1] -= R[m_rxn];
     }
 
-    void decrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
-        S[m_ic0] -= R[m_rxn];
-        S[m_ic1] -= R[m_rxn];
-    }
-
-    void multiply(const doublereal* S, doublereal* R) const {
+    inline void multiply(const doublereal* S, doublereal* R) const {
         if (S[m_ic0] < 0 && S[m_ic1] < 0) {
             R[m_rxn] = 0;
         } else {
@@ -265,43 +217,21 @@ public:
         }
     }
 
-    void multiply(const std::vector<std::uint8_t>& iactive,
-                  const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        if (S[m_ic0] < 0 && S[m_ic1] < 0) {
-            R[m_rxn] = 0;
-        } else {
-            R[m_rxn] *= S[m_ic0] * S[m_ic1];
-        }
-    }
-
-    void incrementReaction(const doublereal* S, doublereal* R) const {
+    inline void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0] + S[m_ic1];
     }
 
-    void incrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] += S[m_ic0] + S[m_ic1];
-    }
-
-    void decrementReaction(const doublereal* S, doublereal* R) const {
+    inline void decrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] -= (S[m_ic0] + S[m_ic1]);
     }
 
-    void decrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] -= (S[m_ic0] + S[m_ic1]);
-    }
-
-    size_t rxnNumber() const {
+    inline size_t rxnNumber() const {
         return m_rxn;
     }
-    size_t speciesIndex(size_t n) const {
+    inline size_t speciesIndex(size_t n) const {
         return (n == 0 ? m_ic0 : m_ic1);
     }
-    size_t nSpecies() {
+    inline size_t nSpecies() {
         return 2;
     }
 
@@ -320,6 +250,7 @@ private:
  */
 class C3
 {
+friend class RxnActiveEdt;
 public:
     C3(size_t rxn = 0, size_t ic0 = 0, size_t ic1 = 0, size_t ic2 = 0)
         : m_rxn(rxn), m_ic0(ic0), m_ic1(ic1), m_ic2(ic2) {}
@@ -338,23 +269,7 @@ public:
         S[m_ic2] += R[m_rxn];
     }
 
-    void incrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
-        S[m_ic0] += R[m_rxn];
-        S[m_ic1] += R[m_rxn];
-        S[m_ic2] += R[m_rxn];
-    }
-
     void decrementSpecies(const doublereal* R, doublereal* S) const {
-        S[m_ic0] -= R[m_rxn];
-        S[m_ic1] -= R[m_rxn];
-        S[m_ic2] -= R[m_rxn];
-    }
-
-    void decrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* R, doublereal* S) const {
-        if (!iactive[m_rxn]) return;
         S[m_ic0] -= R[m_rxn];
         S[m_ic1] -= R[m_rxn];
         S[m_ic2] -= R[m_rxn];
@@ -369,34 +284,11 @@ public:
         }
     }
 
-    void multiply(const std::vector<std::uint8_t>& iactive,
-                  const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        if ((S[m_ic0] < 0 && (S[m_ic1] < 0 || S[m_ic2] < 0)) ||
-            (S[m_ic1] < 0 && S[m_ic2] < 0)) {
-            R[m_rxn] = 0;
-        } else {
-            R[m_rxn] *= S[m_ic0] * S[m_ic1] * S[m_ic2];
-        }
-    }
-
     void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0] + S[m_ic1] + S[m_ic2];
     }
 
-    void incrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
-        R[m_rxn] += S[m_ic0] + S[m_ic1] + S[m_ic2];
-    }
-
     void decrementReaction(const doublereal* S, doublereal* R) const {
-        R[m_rxn] -= (S[m_ic0] + S[m_ic1] + S[m_ic2]);
-    }
-
-    void decrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* S, doublereal* R) const {
-        if (!iactive[m_rxn]) return;
         R[m_rxn] -= (S[m_ic0] + S[m_ic1] + S[m_ic2]);
     }
 
@@ -425,6 +317,7 @@ private:
  */
 class C_AnyN
 {
+friend class RxnActiveEdt;
 public:
     C_AnyN() :
         m_n(0),
@@ -464,52 +357,21 @@ public:
     }
 
     void multiply(const doublereal* input, doublereal* output) const {
-        doublereal oo;
-        int neg_count = 0;
         for (size_t n = 0; n < m_n; n++) {
-            oo = m_order[n];
-            if (oo != 0.0) {
-                if (input[m_ic[n]] < 0) {
-                    neg_count++;
+            double order = m_order[n];
+            if (order != 0.0) {
+                double c = input[m_ic[n]];
+                if (c > 0.0) {
+                    output[m_rxn] *= std::pow(c, order);
+                } else {
+                    output[m_rxn] = 0.0;
                 }
-                output[m_rxn] *= ppow(input[m_ic[n]], oo);
             }
-        }
-        if (neg_count > 1) {
-            output[m_rxn] = 0;
-        }
-    }
-
-    void multiply(const std::vector<std::uint8_t>& iactive,
-                  const doublereal* input, doublereal* output) const {
-        if (!iactive[m_rxn]) return;
-        doublereal oo;
-        int neg_count = 0;
-        for (size_t n = 0; n < m_n; n++) {
-            oo = m_order[n];
-            if (oo != 0.0) {
-                if (input[m_ic[n]] < 0) {
-                    neg_count++;
-                }
-                output[m_rxn] *= ppow(input[m_ic[n]], oo);
-            }
-        }
-        if (neg_count > 1) {
-            output[m_rxn] = 0;
         }
     }
 
     void incrementSpecies(const doublereal* input,
                           doublereal* output) const {
-        doublereal x = input[m_rxn];
-        for (size_t n = 0; n < m_n; n++) {
-            output[m_ic[n]] += m_stoich[n]*x;
-        }
-    }
-
-    void incrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* input, doublereal* output) const {
-        if (!iactive[m_rxn]) return;
         doublereal x = input[m_rxn];
         for (size_t n = 0; n < m_n; n++) {
             output[m_ic[n]] += m_stoich[n]*x;
@@ -524,26 +386,8 @@ public:
         }
     }
 
-    void decrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* input, doublereal* output) const {
-        if (!iactive[m_rxn]) return;
-        doublereal x = input[m_rxn];
-        for (size_t n = 0; n < m_n; n++) {
-            output[m_ic[n]] -= m_stoich[n]*x;
-        }
-    }
-
     void incrementReaction(const doublereal* input,
                            doublereal* output) const {
-        for (size_t n = 0; n < m_n; n++) {
-            output[m_rxn] += m_stoich[n]*input[m_ic[n]];
-        }
-    }
-
-    void incrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* input,
-                           doublereal* output) const {
-        if (!iactive[m_rxn]) return;
         for (size_t n = 0; n < m_n; n++) {
             output[m_rxn] += m_stoich[n]*input[m_ic[n]];
         }
@@ -556,14 +400,9 @@ public:
         }
     }
 
-    void decrementReaction(const std::vector<std::uint8_t>& iactive,
-                           const doublereal* input, doublereal* output) const {
-        if (!iactive[m_rxn]) return;
-        for (size_t n = 0; n < m_n; n++) {
-            output[m_rxn] -= m_stoich[n]*input[m_ic[n]];
-        }
+    size_t rxnNumber() const {
+        return m_rxn;
     }
-
 private:
     //! Length of the m_ic vector
     /*!
@@ -615,32 +454,11 @@ inline static void _multiply(InputIter begin, InputIter end,
 }
 
 template<class InputIter, class Vec1, class Vec2>
-inline static void _multiply(InputIter begin, InputIter end,
-                             const std::vector<std::uint8_t>& iactive,
-                             const Vec1& input, Vec2& output)
-{
-    for (; begin != end; ++begin) {
-        begin->multiply(iactive, input, output);
-    }
-}
-
-template<class InputIter, class Vec1, class Vec2>
 inline static void _incrementSpecies(InputIter begin,
                                      InputIter end, const Vec1& input, Vec2& output)
 {
     for (; begin != end; ++begin) {
         begin->incrementSpecies(input, output);
-    }
-}
-
-template<class InputIter, class Vec1, class Vec2>
-inline static void _incrementSpecies(InputIter begin,
-                                     InputIter end,
-                                     const std::vector<std::uint8_t>& iactive,
-                                     const Vec1& input, Vec2& output)
-{
-    for (; begin != end; ++begin) {
-        begin->incrementSpecies(iactive, input, output);
     }
 }
 
@@ -654,17 +472,6 @@ inline static void _decrementSpecies(InputIter begin,
 }
 
 template<class InputIter, class Vec1, class Vec2>
-inline static void _decrementSpecies(InputIter begin,
-                                     InputIter end,
-                                     const std::vector<std::uint8_t>& iactive,
-                                     const Vec1& input, Vec2& output)
-{
-    for (; begin != end; ++begin) {
-        begin->decrementSpecies(iactive, input, output);
-    }
-}
-
-template<class InputIter, class Vec1, class Vec2>
 inline static void _incrementReactions(InputIter begin,
                                        InputIter end, const Vec1& input, Vec2& output)
 {
@@ -674,33 +481,11 @@ inline static void _incrementReactions(InputIter begin,
 }
 
 template<class InputIter, class Vec1, class Vec2>
-inline static void _incrementReactions(InputIter begin,
-                                       InputIter end,
-                                       const std::vector<std::uint8_t>& iactive,
-                                       const Vec1& input, Vec2& output)
-{
-    for (; begin != end; ++begin) {
-        begin->incrementReaction(iactive, input, output);
-    }
-}
-
-template<class InputIter, class Vec1, class Vec2>
 inline static void _decrementReactions(InputIter begin,
                                        InputIter end, const Vec1& input, Vec2& output)
 {
     for (; begin != end; ++begin) {
         begin->decrementReaction(input, output);
-    }
-}
-
-template<class InputIter, class Vec1, class Vec2>
-inline static void _decrementReactions(InputIter begin,
-                                       InputIter end,
-                                       const std::vector<std::uint8_t>& iactive,
-                                       const Vec1& input, Vec2& output)
-{
-    for (; begin != end; ++begin) {
-        begin->decrementReaction(iactive, input, output);
     }
 }
 
@@ -744,6 +529,9 @@ inline static void _decrementReactions(InputIter begin,
  */
 class StoichManagerN
 {
+
+friend class RxnActiveEdt;
+
 public:
     /**
      * Constructor for the StoichManagerN class.
@@ -847,31 +635,11 @@ public:
         _multiply(m_cn_list.begin(), m_cn_list.end(), input, output);
     }
 
-    void multiply(const std::vector<std::uint8_t>& iactive,
-                  const doublereal* input, doublereal* output) const {
-        _multiply(m_c1_list.begin(), m_c1_list.end(), iactive, input, output);
-        _multiply(m_c2_list.begin(), m_c2_list.end(), iactive, input, output);
-        _multiply(m_c3_list.begin(), m_c3_list.end(), iactive, input, output);
-        _multiply(m_cn_list.begin(), m_cn_list.end(), iactive, input, output);
-    }
-
     void incrementSpecies(const doublereal* input, doublereal* output) const {
         _incrementSpecies(m_c1_list.begin(), m_c1_list.end(), input, output);
         _incrementSpecies(m_c2_list.begin(), m_c2_list.end(), input, output);
         _incrementSpecies(m_c3_list.begin(), m_c3_list.end(), input, output);
         _incrementSpecies(m_cn_list.begin(), m_cn_list.end(), input, output);
-    }
-
-    void incrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* input, doublereal* output) const {
-        _incrementSpecies(m_c1_list.begin(), m_c1_list.end(), iactive,
-                          input, output);
-        _incrementSpecies(m_c2_list.begin(), m_c2_list.end(), iactive,
-                          input, output);
-        _incrementSpecies(m_c3_list.begin(), m_c3_list.end(), iactive,
-                          input, output);
-        _incrementSpecies(m_cn_list.begin(), m_cn_list.end(), iactive,
-                          input, output);
     }
 
     void decrementSpecies(const doublereal* input, doublereal* output) const {
@@ -881,35 +649,11 @@ public:
         _decrementSpecies(m_cn_list.begin(), m_cn_list.end(), input, output);
     }
 
-    void decrementSpecies(const std::vector<std::uint8_t>& iactive,
-                          const doublereal* input, doublereal* output) const {
-        _decrementSpecies(m_c1_list.begin(), m_c1_list.end(), iactive,
-                          input, output);
-        _decrementSpecies(m_c2_list.begin(), m_c2_list.end(), iactive,
-                          input, output);
-        _decrementSpecies(m_c3_list.begin(), m_c3_list.end(), iactive,
-                          input, output);
-        _decrementSpecies(m_cn_list.begin(), m_cn_list.end(), iactive,
-                          input, output);
-    }
-
     void incrementReactions(const doublereal* input, doublereal* output) const {
         _incrementReactions(m_c1_list.begin(), m_c1_list.end(), input, output);
         _incrementReactions(m_c2_list.begin(), m_c2_list.end(), input, output);
         _incrementReactions(m_c3_list.begin(), m_c3_list.end(), input, output);
         _incrementReactions(m_cn_list.begin(), m_cn_list.end(), input, output);
-    }
-
-    void incrementReactions(const std::vector<std::uint8_t>& iactive,
-                            const doublereal* input, doublereal* output) const {
-        _incrementReactions(m_c1_list.begin(), m_c1_list.end(), iactive,
-                            input, output);
-        _incrementReactions(m_c2_list.begin(), m_c2_list.end(), iactive,
-                            input, output);
-        _incrementReactions(m_c3_list.begin(), m_c3_list.end(), iactive,
-                            input, output);
-        _incrementReactions(m_cn_list.begin(), m_cn_list.end(), iactive,
-                            input, output);
     }
 
     void decrementReactions(const doublereal* input, doublereal* output) const {
@@ -919,17 +663,6 @@ public:
         _decrementReactions(m_cn_list.begin(), m_cn_list.end(), input, output);
     }
 
-    void decrementReactions(const std::vector<std::uint8_t>& iactive,
-                            const doublereal* input, doublereal* output) const {
-        _decrementReactions(m_c1_list.begin(), m_c1_list.end(), iactive,
-                            input, output);
-        _decrementReactions(m_c2_list.begin(), m_c2_list.end(), iactive,
-                            input, output);
-        _decrementReactions(m_c3_list.begin(), m_c3_list.end(), iactive,
-                            input, output);
-        _decrementReactions(m_cn_list.begin(), m_cn_list.end(), iactive,
-                            input, output);
-    }
 private:
     std::vector<C1> m_c1_list;
     std::vector<C2> m_c2_list;

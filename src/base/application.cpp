@@ -1,4 +1,8 @@
 //! @file application.cpp
+
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #include "application.h"
 
 #include "cantera/base/ctml.h"
@@ -121,7 +125,8 @@ void Application::ThreadMessages::removeThreadMessages()
 
 Application::Application() :
     m_suppress_deprecation_warnings(false),
-    m_fatal_deprecation_warnings(false)
+    m_fatal_deprecation_warnings(false),
+    m_suppress_thermo_warnings(false)
 {
     // install a default logwriter that writes to standard
     // output / standard error

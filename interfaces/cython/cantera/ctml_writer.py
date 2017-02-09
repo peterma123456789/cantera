@@ -16,6 +16,9 @@
 #
 # This will produce CTML file 'infile.xml'
 
+# This file is part of Cantera. See License.txt in the top-level directory or
+# at http://www.cantera.org/license.txt for license and copyright information.
+
 from __future__ import print_function
 
 import sys
@@ -489,7 +492,6 @@ class element(object):
         self._sym = symbol
         self._atw = atomic_mass
         self._num = atomic_number
-        global _elements
         _elements.append(self)
 
     def build(self, db):
@@ -581,18 +583,12 @@ class species(object):
                 self._charge = chrg
         self._size = size
 
-        global _species
-        global _enames
         _species.append(self)
-        global _speciesnames
-        if name in _speciesnames:
-            raise CTI_Error('species '+name+' multiply defined.')
         _speciesnames.append(name)
         for e in self._atoms.keys():
             _enames[e] = 1
 
     def export(self, f, fmt = 'CSV'):
-        global _enames
         if fmt == 'CSV':
             s = self._name+','
             for e in _enames:
@@ -1151,7 +1147,6 @@ class reaction(object):
             self._options = [options]
         else:
             self._options = options
-        global _reactions
         self._num = len(_reactions)+1
         r = ''
         p = ''
@@ -1170,8 +1165,9 @@ class reaction(object):
             for o in order.keys():
                 if (o not in self._rxnorder and
                     'nonreactant_orders' not in self._options):
-                    raise CTI_Error("order specified for non-reactant: " + o +
-                                    " and no 'nonreactant_orders' option given")
+                    raise CTI_Error("order specified for non-reactant '{}'"
+                                    " and no 'nonreactant_orders' option given"
+                                    " for reaction '{}'".format(o, self._e))
                 else:
                     self._rxnorder[o] = order[o]
 
@@ -1220,7 +1216,8 @@ class reaction(object):
                                 mindim = ph._dim
                         break
                 if nm == -999:
-                    raise CTI_Error("species "+s+" not found")
+                    raise CTI_Error("species '{0}' not found while parsing "
+                        "reaction: '{1}'.".format(s, self._e))
             else:
                 # If no phases are defined, assume all reactants are in bulk
                 # phases
@@ -1406,7 +1403,9 @@ class pdep_reaction(reaction):
                 if r[-1] == ')' and r.find('(') < 0:
                     species = r[:-1]
                     if self._eff:
-                        raise CTI_Error('(+ '+species+') and '+self._eff+' cannot both be specified')
+                        raise CTI_Error("In reaction '{0}', explcit third body "
+                            "'(+ {1})' and efficiencies cannot both be "
+                            "specified".format(self._e, species))
                     self._eff = species+':1.0'
                     self._effm = 0.0
 
@@ -1768,30 +1767,7 @@ class phase(object):
         # dictionary of species names
         self._spmap = {}
 
-        # for each species string, check whether or not the species
-        # are imported or defined locally. If imported, the string
-        # contains a colon (:)
-        for sp in self._species:
-            icolon = sp.find(':')
-            if icolon > 0:
-                #datasrc, spnames = sp.split(':')
-                datasrc = sp[:icolon].strip()
-                spnames = sp[icolon+1:]
-                self._sp.append((datasrc+'.xml', spnames))
-            else:
-                spnames = sp
-                self._sp.append(('', spnames))
-
-            for s in spnames.split():
-                if s != 'all' and s in self._spmap:
-                    raise CTI_Error('Multiply-declared species '+s+' in phase '+self._name)
-                self._spmap[s] = self._dim
-
         self._rxns = reactions
-
-        # check that species have been declared
-        if len(self._spmap) == 0:
-            raise CTI_Error('No species declared for phase '+self._name)
 
         # and that only one species is declared if it is a pure phase
         if self.is_pure() and len(self._spmap) > 1:
@@ -1801,7 +1777,6 @@ class phase(object):
         self._initial = initial_state
 
         # add this phase to the global phase list
-        global _phases
         _phases.append(self)
 
 
@@ -1822,7 +1797,6 @@ class phase(object):
         """Concentration dimensions. Used in computing the units for reaction
         rate coefficients."""
         return (1, -self._dim)
-
 
     def buildrxns(self, p):
 
@@ -1869,6 +1843,34 @@ class phase(object):
 
 
     def build(self, p):
+        # for each species string, check whether or not the species
+        # are imported or defined locally. If imported, the string
+        # contains a colon (:)
+        for sp in self._species:
+            foundColon = False
+            allLocal = True
+            for token in sp.split():
+                if ':' in sp:
+                    foundColon = True
+                if token not in _speciesnames:
+                    allLocal = False
+
+            if foundColon and not allLocal:
+                icolon = sp.find(':')
+                datasrc = sp[:icolon].strip()
+                spnames = sp[icolon+1:]
+                self._sp.append((datasrc+'.xml', spnames))
+            else:
+                spnames = sp
+                self._sp.append(('', spnames))
+
+            for s in spnames.split():
+                self._spmap[s] = self._dim
+
+        # check that species have been declared
+        if len(self._spmap) == 0:
+            raise CTI_Error('No species declared for phase '+self._name)
+
         p.addComment('    phase '+self._name+'     ')
         ph = p.addChild('phase')
         ph['id'] = self._name

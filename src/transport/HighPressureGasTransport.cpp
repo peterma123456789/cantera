@@ -4,11 +4,15 @@
  *
  *  Transport parameters are calculated using corresponding states models:
  *      Binary diffusion coefficients use the generalized chart described by
- *      Takahashi, et al. and viscosity calcualtions use the Lucas method.
+ *      Takahashi, et al. and viscosity calculations use the Lucas method.
  *      All methods are described in Reid, Prausnitz, and Polling, "The Properties
  *      of Gases and Liquids, 4th ed., 1987 (viscosity in Ch. 9, Thermal
  *      conductivity in Ch. 10, and Diffusion coefficients in Ch. 11).
  **/
+
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #include "cantera/transport/HighPressureGasTransport.h"
 #include "cantera/numerics/ctlapack.h"
 #include "cantera/base/utilities.h"
@@ -243,7 +247,7 @@ void HighPressureGasTransport::getMultiDiffCoeffs(const size_t ld, doublereal* c
     m_bindiff_ok = false; // m_bdiff is overwritten by the above routine.
 
     // Having corrected m_bdiff for pressure and concentration effects, the
-    //    routine now procedes the same as in the low-pressure case:
+    //    routine now proceeds the same as in the low-pressure case:
 
     // evaluate L0000 if the temperature or concentrations have
     // changed since it was last evaluated.
@@ -320,7 +324,7 @@ doublereal HighPressureGasTransport::viscosity()
         // Calculate contribution to quantum correction term.
         // SCD Note:  This assumes the species of interest (He, H2, and D2) have
         //   been named in this specific way.  They are perhaps the most obvious
-        //   names, butit would of course be preferred to have a more general
+        //   names, but it would of course be preferred to have a more general
         //   approach, here.
         std::vector<std::string> spnames = m_thermo->speciesNames();
         if (spnames[i] == "He") {

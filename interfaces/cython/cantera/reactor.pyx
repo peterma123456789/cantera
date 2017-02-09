@@ -1,7 +1,14 @@
+# This file is part of Cantera. See License.txt in the top-level directory or
+# at http://www.cantera.org/license.txt for license and copyright information.
+
 from collections import defaultdict as _defaultdict
 import numbers as _numbers
 
 _reactor_counts = _defaultdict(int)
+
+# Need a pure-python class to store weakrefs to
+class _WeakrefProxy(object):
+    pass
 
 cdef class ReactorBase:
     """
@@ -13,6 +20,7 @@ cdef class ReactorBase:
 
     # The signature of this function causes warnings for Sphinx documentation
     def __init__(self, ThermoPhase contents=None, name=None, *, volume=None):
+        self._weakref_proxy = _WeakrefProxy()
         self._inlets = []
         self._outlets = []
         self._walls = []
@@ -38,6 +46,7 @@ cdef class ReactorBase:
         properties and kinetic rates for this reactor.
         """
         self._thermo = solution
+        self._thermo._references[self._weakref_proxy] = True
         self.rbase.setThermoMgr(deref(solution.thermo))
 
     property name:
@@ -201,6 +210,18 @@ cdef class Reactor(ReactorBase):
             self.rbase.restoreState()
             return self._kinetics
 
+    property chemistry_enabled:
+        """
+        *True* when the reactor composition is allowed to change due to
+        chemical reactions in this reactor. When this is *False*, the
+        reactor composition is held constant.
+        """
+        def __get__(self):
+            return self.reactor.chemistryEnabled()
+
+        def __set__(self, pybool value):
+            self.reactor.setChemistry(value)
+
     property energy_enabled:
         """
         *True* when the energy equation is being solved for this reactor.
@@ -289,7 +310,7 @@ cdef class Reactor(ReactorBase):
         name from the index.
         """
         if not self.n_vars:
-            raise Exception('Reactor empty or network not initialized.')
+            raise CanteraError('Reactor empty or network not initialized.')
         cdef np.ndarray[np.double_t, ndim=1] y = np.zeros(self.n_vars)
         self.reactor.getState(&y[0])
         return y
@@ -381,12 +402,12 @@ cdef class WallSurface:
         """
         def __get__(self):
             if self._kinetics is None:
-                raise Exception('No kinetics manager present')
+                raise CanteraError('No kinetics manager present')
             self.cxxwall.syncCoverages(self.side)
             return self._kinetics.coverages
         def __set__(self, coverages):
             if self._kinetics is None:
-                raise Exception("Can't set coverages before assigning kinetics manager.")
+                raise CanteraError("Can't set coverages before assigning kinetics manager.")
 
             if isinstance(coverages, (dict, str, unicode, bytes)):
                 self.cxxwall.setCoverages(self.side, comp_map(coverages))
@@ -409,6 +430,8 @@ cdef class ReactorSurface:
     :param kin:
         The `Kinetics` or `Interface` object representing reactions on this
         surface.
+    :param r:
+        The `Reactor` into which this surface should be installed.
     :param A:
         The area of the reacting surface [m^2]
     """
@@ -453,12 +476,12 @@ cdef class ReactorSurface:
         """
         def __get__(self):
             if self._kinetics is None:
-                raise Exception('No kinetics manager present')
+                raise CanteraError('No kinetics manager present')
             self.surface.syncCoverages()
             return self._kinetics.coverages
         def __set__(self, coverages):
             if self._kinetics is None:
-                raise Exception("Can't set coverages before assigning kinetics manager.")
+                raise CanteraError("Can't set coverages before assigning kinetics manager.")
 
             if isinstance(coverages, (dict, str, unicode, bytes)):
                 self.surface.setCoverages(comp_map(coverages))
@@ -1095,7 +1118,7 @@ cdef class ReactorNet:
         all entities contained.
         """
         if not self.n_vars:
-            raise Exception('ReactorNet empty or not initialized.')
+            raise CanteraError('ReactorNet empty or not initialized.')
         cdef np.ndarray[np.double_t, ndim=1] y = np.zeros(self.n_vars)
         self.net.getState(&y[0])
         return y
@@ -1132,9 +1155,9 @@ cdef class ReactorNet:
         if not residual_threshold:
             residual_threshold = 10. * self.rtol
         if residual_threshold <= self.rtol:
-            raise Exception('Residual threshold (' + str(residual_threshold) +
-                            ') should be below solver rtol (' +
-                            str(self.rtol) + ')')
+            raise CanteraError('Residual threshold (' + str(residual_threshold) +
+                               ') should be below solver rtol (' +
+                               str(self.rtol) + ')')
         if return_residuals:
             residuals = np.empty(max_steps)
         # check if system is initialized
@@ -1156,8 +1179,8 @@ cdef class ReactorNet:
             if residual < residual_threshold:
                 break
         if step == max_steps - 1:
-            raise Exception('Maximum number of steps reached before convergence'
-                            ' below maximum residual')
+            raise CanteraError('Maximum number of steps reached before'
+                               ' convergence below maximum residual')
         if return_residuals:
             return residuals[:step + 1]
 

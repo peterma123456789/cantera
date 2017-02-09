@@ -1,8 +1,9 @@
 /**
  *  @file RateCoeffMgr.h
  */
-// Copyright 2001  California Institute of Technology
 
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
 
 #ifndef CT_RATECOEFF_MGR_H
 #define CT_RATECOEFF_MGR_H
@@ -12,6 +13,8 @@
 namespace Cantera
 {
 
+class RxnActiveEdt;
+
 /**
  * This rate coefficient manager supports one parameterization of
  * the rate constant of any type.
@@ -19,6 +22,7 @@ namespace Cantera
 template<class R>
 class Rate1
 {
+friend class RxnActiveEdt;
 public:
     Rate1() {}
     virtual ~Rate1() {}
@@ -55,17 +59,6 @@ public:
     }
 
     /**
-     * Update the concentration-dependent parts of the rate coefficient, in
-     * accordance with the muted flag.
-     */
-    void update_C(const std::vector<std::uint8_t>& iactive, const doublereal* c) {
-        for (size_t i = 0; i != m_rates.size(); i++) {
-            // skip if reaction m_rxn[i] is muted
-            if (iactive[m_rxn[i]]) m_rates[i].update_C(c);
-        }
-    }
-
-    /**
      * Write the rate coefficients into array values. Each calculator writes one
      * entry in values, at the location specified by the reaction number when it
      * was installed. Note that nothing will be done for reactions that have
@@ -76,19 +69,6 @@ public:
         doublereal recipT = 1.0/T;
         for (size_t i = 0; i != m_rates.size(); i++) {
             values[m_rxn[i]] = m_rates[i].updateRC(logT, recipT);
-        }
-    }
-
-    /**
-     * Write the rate coefficients into array values, in accordance with the
-     * muted flag.
-     */
-    void update(doublereal T, doublereal logT,
-                const std::vector<std::uint8_t>& iactive, doublereal* values) {
-        doublereal recipT = 1.0/T;
-        for (size_t i = 0; i != m_rates.size(); i++) {
-            values[m_rxn[i]] =
-              (iactive[m_rxn[i]]) ? m_rates[i].updateRC(logT, recipT) : 0.;
         }
     }
 

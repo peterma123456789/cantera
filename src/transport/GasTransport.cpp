@@ -1,4 +1,8 @@
 //! @file GasTransport.cpp
+
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #include "cantera/transport/GasTransport.h"
 #include "MMCollisionInt.h"
 #include "cantera/base/stringUtils.h"
@@ -101,6 +105,11 @@ GasTransport& GasTransport::operator=(const GasTransport& right)
 
 void GasTransport::update_T()
 {
+    if (m_thermo->nSpecies() != m_nsp) {
+        // Rebuild data structures if number of species has changed
+        init(m_thermo, m_mode, m_log_level);
+    }
+
     double T = m_thermo->temperature();
     if (T == m_temp) {
         return;
@@ -246,14 +255,10 @@ void GasTransport::getMixDiffCoeffs(doublereal* const d)
     }
 
     doublereal mmw = m_thermo->meanMolecularWeight();
-    doublereal sumxw = 0.0;
     doublereal p = m_thermo->pressure();
     if (m_nsp == 1) {
         d[0] = m_bdiff(0,0) / p;
     } else {
-        for (size_t k = 0; k < m_nsp; k++) {
-            sumxw += m_molefracs[k] * m_mw[k];
-        }
         for (size_t k = 0; k < m_nsp; k++) {
             double sum2 = 0.0;
             for (size_t j = 0; j < m_nsp; j++) {
@@ -264,7 +269,7 @@ void GasTransport::getMixDiffCoeffs(doublereal* const d)
             if (sum2 <= 0.0) {
                 d[k] = m_bdiff(k,k) / p;
             } else {
-                d[k] = (sumxw - m_molefracs[k] * m_mw[k])/(p * mmw * sum2);
+                d[k] = (mmw - m_molefracs[k] * m_mw[k])/(p * mmw * sum2);
             }
         }
     }
@@ -517,6 +522,10 @@ void GasTransport::fitCollisionIntegrals(MMCollisionInt& integrals)
         }
     }
     vector_fp fitlist;
+    m_omega22_poly.clear();
+    m_astar_poly.clear();
+    m_bstar_poly.clear();
+    m_cstar_poly.clear();
     for (size_t i = 0; i < m_nsp; i++) {
         for (size_t j = i; j < m_nsp; j++) {
             // Chemkin fits only delta* = 0
@@ -557,6 +566,9 @@ void GasTransport::fitProperties(MMCollisionInt& integrals)
     vector_fp tlog(np), spvisc(np), spcond(np);
     vector_fp w(np), w2(np);
 
+    m_visccoeffs.clear();
+    m_condcoeffs.clear();
+
     // generate array of log(t) values
     for (size_t n = 0; n < np; n++) {
         double t = m_thermo->minTemp() + dt*n;
@@ -583,6 +595,7 @@ void GasTransport::fitProperties(MMCollisionInt& integrals)
         }
     }
 
+    double T_save = m_thermo->temperature();
     const vector_fp& mw = m_thermo->molecularWeights();
     for (size_t k = 0; k < m_nsp; k++) {
         for (size_t n = 0; n < np; n++) {
@@ -682,6 +695,8 @@ void GasTransport::fitProperties(MMCollisionInt& integrals)
             writelog(m_thermo->speciesName(k) + ": [" + vec2str(c) + "]\n");
         }
     }
+    m_thermo->setTemperature(T_save);
+
     if (m_log_level) {
         writelogf("Maximum viscosity absolute error:  %12.6g\n", mxerr);
         writelogf("Maximum viscosity relative error:  %12.6g\n", mxrelerr);
@@ -712,6 +727,7 @@ void GasTransport::fitProperties(MMCollisionInt& integrals)
 
     mxerr = 0.0, mxrelerr = 0.0;
     vector_fp diff(np + 1);
+    m_diffcoeffs.clear();
     for (size_t k = 0; k < m_nsp; k++) {
         for (size_t j = k; j < m_nsp; j++) {
             for (size_t n = 0; n < np; n++) {

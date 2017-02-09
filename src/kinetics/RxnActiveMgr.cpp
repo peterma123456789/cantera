@@ -1,5 +1,5 @@
 /**
- *  @file RxnActiveMgr.cpp Declarations for the base class for active reaction
+ *  @file RxnActiveMgr.cpp Declarations for the base class for activ reaction
  *  managers
  *
  *  RxnActiveMgr managers the activation of reactions in a adpative kinitics
@@ -12,18 +12,18 @@
 
 using namespace std;
 
-namespace Cantera
-{
+namespace Cantera {
 
-void RxnActiveMgr::updateStoichMatrix()
-{
+void RxnActiveMgr::updateStoichMatrix() {
   typedef Eigen::Triplet<double> T;
 
   vector<T> tripletList;
   double coeff;
 
-  AssertThrowMsg(m_kinetics->nPhases() == 1, "RxnActiveMgr::updateStoichMatrix",
-                 "Only homogeneous reaction mechanisms are supported, nPhases = {} != 1", m_kinetics->nPhases());
+  AssertThrowMsg(
+      m_kinetics->nPhases() == 1, "RxnActiveMgr::updateStoichMatrix",
+      "Only homogeneous reaction mechanisms are supported, nPhases = {} != 1",
+      m_kinetics->nPhases());
 
   // Update nRxns and nSpecs
   size_t _nSpecs = m_kinetics->thermo().nSpecies();
@@ -36,26 +36,24 @@ void RxnActiveMgr::updateStoichMatrix()
   tripletList.clear();
   for (size_t iRxn = 0; iRxn < m_nRxns; iRxn++) {
     for (size_t iSpec = 0; iSpec < m_nSpecs; iSpec++) {
-       coeff = m_kinetics->productStoichCoeff(iSpec, iRxn);
+      coeff = m_kinetics->productStoichCoeff(iSpec, iRxn);
       if (coeff != 0.)
-        tripletList.push_back(T(iSpec,iRxn,coeff));
+        tripletList.push_back(T(iSpec, iRxn, coeff));
       coeff = m_kinetics->reactantStoichCoeff(iSpec, iRxn);
       if (coeff != 0.)
-        tripletList.push_back(T(iSpec,iRxn,-coeff));
+        tripletList.push_back(T(iSpec, iRxn, -coeff));
     }
   }
   m_stoich_mol.setFromTriplets(tripletList.begin(), tripletList.end());
-  m_stoich_mol.makeCompressed();
 
   // Update non-zero patterns for m_wm
   m_wm = m_stoich_mol;
   m_wm.setZero();
 }
 
-void RxnActiveMgr::updateActiveRxns(const double relTol, const double absTol)
-{
-  // Reset m_iactive
-  std::fill(m_iactive.begin(), m_iactive.end(), true);
+void RxnActiveMgr::updateActiveRxns(const double relTol, const double absTol) {
+  // Reset m_iactiv
+  std::fill(m_iactiv.begin(), m_iactiv.end(), 1);
   // Obtain temperature
   const double T = m_kinetics->thermo().temperature();
   // Obtain density
@@ -64,61 +62,64 @@ void RxnActiveMgr::updateActiveRxns(const double relTol, const double absTol)
   const double cv = m_kinetics->thermo().cv_mass();
 
   // Stoich * ROP
-  VecType& ROP = m_wa_nr;
+  VecType &ROP = m_wa_nr;
   m_kinetics->getNetRatesOfProgress(ROP.data());
   m_wm = m_stoich_mol * ROP.asDiagonal();
 
   // dTV = 1/(rTol * T + aTol) * 1/rho * 1/cp * (-u') * (Stoich * ROP)
-  VecType& u = m_wa_ns;
+  VecType &u = m_wa_ns;
   m_kinetics->thermo().getPartialMolarIntEnergies(u.data());
-  u /= (-rho * cv * (relTol*T + absTol));
-  VecType& dTVec = m_wa_nr;
+  u /= (-rho * cv * (relTol * T + absTol));
+  VecType &dTVec = m_wa_nr;
   dTVec = m_wm.transpose() * u;
 
   // dYV = diag(1 / (rTol * Y + aTol)) * 1/rho * daig(MW) * (Stoich * ROP)
-  SpCMat& dYMat = m_wm;
-  VecType& Y = m_wa_ns;
+  SpCMat &dYMat = m_wm;
+  VecType &Y = m_wa_ns;
   m_kinetics->thermo().getMassFractions(Y.data());
-  Y *= rho*relTol;
-  Y.array() += (rho*absTol);
+  Y *= rho * relTol;
+  Y.array() += (rho * absTol);
   Y.noalias() = Y.cwiseInverse();
-  const vector<double>& mw = m_kinetics->thermo().molecularWeights();
+  const vector<double> &mw = m_kinetics->thermo().molecularWeights();
   Y *= Eigen::Map<const VecType>(mw.data(), m_nSpecs);
   dYMat = Y.asDiagonal() * m_wm;
-  
+
   // choose activated reactions
   double dTError;
-  VecType& dYError = m_wa_ns;
+  VecType &dYError = m_wa_ns;
   double tmpError;
   dTError = 0.;
   dYError.setZero();
   for (size_t iRxn = 0; iRxn < m_nRxns; iRxn++) {
     tmpError = dTError + dTVec[iRxn];
-    if (abs(tmpError) > 1.) continue; // error in T is too large
-    bool _iact = false;
-    for (Eigen::SparseMatrix<double>::InnerIterator it(dYMat,iRxn); it; ++it) {
+    if (abs(tmpError) > 1.)
+      continue; // error in T is too large
+    bool _iact = 0;
+    for (Eigen::SparseMatrix<double>::InnerIterator it(dYMat, iRxn); it; ++it) {
       // it.row() == iSpec
       tmpError = dYError[it.row()] + it.value();
       if (abs(tmpError) > 1.) { // error in Y[it.row()] is too large
-        _iact = true;
+        _iact = 1;
         break;
       }
     }
-    if (!_iact) { // iRxn shall no be activated
+    if (!_iact) { // iRxn shall not be activated
       // change activation flag
-      m_iactive[iRxn] = false;
-      // update accululated error
+      m_iactiv[iRxn] = 0;
+      // update accumulated error
       dTError += dTVec[iRxn];
       dYError += dYMat.col(iRxn);
     }
   }
+  // update m_nactiv
+  m_nactiv = updateNumActive(m_iactiv);
 }
 
-void RxnActiveMgr::resizeData(const size_t _nSpecs, const size_t _nRxns)
-{
-  if (_nSpecs==m_nSpecs && _nRxns==m_nRxns)
+void RxnActiveMgr::resizeData(const size_t _nSpecs, const size_t _nRxns) {
+  if (_nSpecs == m_nSpecs && _nRxns == m_nRxns)
     return;
-  m_nSpecs = _nSpecs; m_nRxns = _nRxns;
+  m_nSpecs = _nSpecs;
+  m_nRxns = _nRxns;
   // Resize stoich matrix
   m_stoich_mol.resize(m_nSpecs, m_nRxns);
   // Resize working arrays
@@ -126,7 +127,13 @@ void RxnActiveMgr::resizeData(const size_t _nSpecs, const size_t _nRxns)
   m_wa_nr.resize(m_nRxns);
   m_wm.resize(m_nSpecs, m_nRxns);
   // Resize activation flag
-  m_iactive.resize(m_nRxns);
+  m_iactiv.resize(m_nRxns);
 }
 
+inline size_t
+RxnActiveMgr::updateNumActive(const std::vector<std::uint8_t> &_iactiv) {
+  size_t _nactiv = 0;
+  for (const std::uint8_t i : _iactiv) _nactiv += i;
+  return _nactiv;
+}
 }

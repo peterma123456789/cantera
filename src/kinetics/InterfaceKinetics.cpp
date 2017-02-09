@@ -2,7 +2,8 @@
  *  @file InterfaceKinetics.cpp
  */
 
-// Copyright 2002  California Institute of Technology
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
 
 #include "cantera/kinetics/InterfaceKinetics.h"
 #include "cantera/kinetics/RateCoeffMgr.h"
@@ -20,8 +21,6 @@ InterfaceKinetics::InterfaceKinetics(thermo_t* thermo) :
     m_redo_rates(false),
     m_surf(0),
     m_integrator(0),
-    m_logp0(0.0),
-    m_logc0(0.0),
     m_ROP_ok(false),
     m_temp(0.0),
     m_logtemp(0.0),
@@ -80,8 +79,6 @@ InterfaceKinetics& InterfaceKinetics::operator=(const InterfaceKinetics& right)
     m_deltaG0 = right.m_deltaG0;
     m_deltaG = right.m_deltaG;
     m_ProdStanConcReac = right.m_ProdStanConcReac;
-    m_logp0 = right.m_logp0;
-    m_logc0 = right.m_logc0;
     m_ROP_ok = right.m_ROP_ok;
     m_temp = right.m_temp;
     m_logtemp = right.m_logtemp;
@@ -607,6 +604,31 @@ void InterfaceKinetics::getDeltaSSEntropy(doublereal* deltaS)
 
 bool InterfaceKinetics::addReaction(shared_ptr<Reaction> r_base)
 {
+    if (!m_surf) {
+        init();
+    }
+
+    // Check that the number of surface sites is balanced
+    double reac_sites = 0.0;
+    double prod_sites = 0.0;
+    for (const auto& reactant : r_base->reactants) {
+        size_t k = m_surf->speciesIndex(reactant.first);
+        if (k != npos) {
+            reac_sites += reactant.second * m_surf->size(k);
+        }
+    }
+    for (const auto& product : r_base->products) {
+        size_t k = m_surf->speciesIndex(product.first);
+        if (k != npos) {
+            prod_sites += product.second * m_surf->size(k);
+        }
+    }
+    if (fabs(reac_sites - prod_sites) > 1e-5 * (reac_sites + prod_sites)) {
+        throw CanteraError("InterfaceKinetics::addReaction", "Number of surface"
+            " sites not balanced in reaction {}.\nReactant sites: {}\n"
+            "Product sites: {}", r_base->equation(), reac_sites, prod_sites);
+    }
+
     size_t i = nReactions();
     bool added = Kinetics::addReaction(r_base);
     if (!added) {

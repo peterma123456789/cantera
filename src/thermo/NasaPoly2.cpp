@@ -1,3 +1,6 @@
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #include "cantera/thermo/NasaPoly2.h"
 #include "cantera/base/global.h"
 #include "cantera/base/stringUtils.h"
@@ -6,6 +9,10 @@ namespace Cantera {
 
 void NasaPoly2::validate(const std::string& name)
 {
+    if (thermo_warnings_suppressed()) {
+        return;
+    }
+
     double cp_low, h_low, s_low;
     double cp_high, h_high, s_high;
     mnp_low.updatePropertiesTemp(m_midT, &cp_low, &h_low, &s_low);

@@ -12,7 +12,9 @@
  *     -  logs        (see \ref logs)
  *     -  textlogs    (see \ref textlogs)
  */
-// Copyright 2001  California Institute of Technology
+
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
 
 #ifndef CT_GLOBAL_H
 #define CT_GLOBAL_H
@@ -112,6 +114,9 @@ std::string findInputFile(const std::string& name);
 
 //! @copydoc Application::addDataDirectory
 void addDirectory(const std::string& dir);
+
+//! @copydoc Application::getDataDirectories
+std::string getDataDirectories(const std::string& sep);
 //@}
 
 //! Delete and free all memory associated with the application
@@ -123,6 +128,9 @@ void appdelete();
 
 //! @copydoc Application::thread_complete
 void thread_complete();
+
+//! Returns the hash of the git commit from which Cantera was compiled, if known
+std::string gitCommit();
 
 //! Returns root directory where %Cantera is installed
 /*!
@@ -188,7 +196,7 @@ void writelog(const std::string& fmt, const Args&... args) {
  * and then feed it into writelog().
  *
  * @param fmt  c format string for the following arguments
- * #param args arguments used to interpolate the format string
+ * @param args arguments used to interpolate the format string
  * @ingroup textlogs
  */
 template <typename... Args>
@@ -210,6 +218,12 @@ void suppress_deprecation_warnings();
 
 //! @copydoc Application::make_deprecation_warnings_fatal
 void make_deprecation_warnings_fatal();
+
+//! @copydoc Application::suppress_thermo_warnings
+void suppress_thermo_warnings(bool suppress=true);
+
+//! @copydoc Application::thermo_warnings_suppressed
+bool thermo_warnings_suppressed();
 
 //! @copydoc Application::Messages::setLogger
 void setLogger(Logger* logwriter);

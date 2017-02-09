@@ -3,63 +3,64 @@
  * @ingroup chemkinetics
  */
 
+// This file is part of Cantera. See License.txt in the top-level directory or
+// at http://www.cantera.org/license.txt for license and copyright information.
+
 #ifndef CT_BULKKINETICS_H
 #define CT_BULKKINETICS_H
 
 #include "Kinetics.h"
 #include "RateCoeffMgr.h"
 
-namespace Cantera
-{
+namespace Cantera {
 
 class ElementaryReaction;
 
 //! Partial specialization of Kinetics for chemistry in a single bulk phase
-class BulkKinetics : public Kinetics
-{
+class BulkKinetics : public Kinetics {
 public:
-    BulkKinetics(thermo_t* thermo = 0);
-    virtual Kinetics* duplMyselfAsKinetics(const std::vector<thermo_t*> & tpVector) const;
+  BulkKinetics(thermo_t *thermo = 0);
 
-    virtual bool isReversible(size_t i);
+  virtual Kinetics *
+  duplMyselfAsKinetics(const std::vector<thermo_t *> &tpVector) const;
 
-    virtual void getDeltaGibbs(doublereal* deltaG);
-    virtual void getDeltaEnthalpy(doublereal* deltaH);
-    virtual void getDeltaEntropy(doublereal* deltaS);
+  virtual bool isReversible(size_t i);
 
-    virtual void getDeltaSSGibbs(doublereal* deltaG);
-    virtual void getDeltaSSEnthalpy(doublereal* deltaH);
-    virtual void getDeltaSSEntropy(doublereal* deltaS);
+  virtual void getDeltaGibbs(doublereal *deltaG);
+  virtual void getDeltaEnthalpy(doublereal *deltaH);
+  virtual void getDeltaEntropy(doublereal *deltaS);
 
-    virtual void getRevRateConstants(doublereal* krev,
-                                     bool doIrreversible = false);
+  virtual void getDeltaSSGibbs(doublereal *deltaG);
+  virtual void getDeltaSSEnthalpy(doublereal *deltaH);
+  virtual void getDeltaSSEntropy(doublereal *deltaS);
 
-    virtual bool addReaction(shared_ptr<Reaction> r);
-    virtual void resizeSpecies();
+  virtual void getRevRateConstants(doublereal *krev,
+                                   bool doIrreversible = false);
 
-    virtual void setMultiplier(size_t i, double f);
-    virtual void invalidateCache();
+  virtual bool addReaction(shared_ptr<Reaction> r);
+  virtual void resizeSpecies();
+
+  virtual void setMultiplier(size_t i, double f);
+  virtual void invalidateCache();
 
 protected:
-    virtual void addElementaryReaction(ElementaryReaction& r);
-    virtual void modifyElementaryReaction(size_t i, ElementaryReaction& rNew);
+  virtual void addElementaryReaction(ElementaryReaction &r);
+  virtual void modifyElementaryReaction(size_t i, ElementaryReaction &rNew);
 
-    Rate1<Arrhenius> m_rates;
-    std::vector<size_t> m_revindex; //!< Indices of reversible reactions
-    std::vector<size_t> m_irrev; //!< Indices of irreversible reactions
+  Rate1<Arrhenius> m_rates;
+  std::vector<size_t> m_revindex; //!< Indices of reversible reactions
+  std::vector<size_t> m_irrev;    //!< Indices of irreversible reactions
 
-    //! Difference between the global reactants order and the global products
-    //! order. Of type "double" to account for the fact that we can have real-
-    //! valued stoichiometries.
-    vector_fp m_dn;
+  //! Difference between the global reactants order and the global products
+  //! order. Of type "double" to account for the fact that we can have real-
+  //! valued stoichiometries.
+  vector_fp m_dn;
 
-    vector_fp m_conc;
-    vector_fp m_grt;
+  vector_fp m_conc;
+  vector_fp m_grt;
 
-    bool m_ROP_ok;
-    doublereal m_temp;
-
-    bool m_finalized;
+  bool m_ROP_ok;
+  doublereal m_temp;
 };
 
 }
