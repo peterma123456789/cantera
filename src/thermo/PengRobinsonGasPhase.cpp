@@ -105,11 +105,13 @@ doublereal PengRobinsonGasPhase::cv_mole() const
     return cv0 + departure;
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 doublereal PengRobinsonGasPhase::standardConcentration(size_t k) const
 {
     return pressure() / (GasConstant * temperature());
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getActivityCoefficients(doublereal* ac) const
 {
     for (size_t k = 0; k < m_kk; k++) {
@@ -117,6 +119,7 @@ void PengRobinsonGasPhase::getActivityCoefficients(doublereal* ac) const
     }
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getStandardChemPotentials(doublereal* muStar) const
 {
     const vector_fp& gibbsrt = gibbs_RT_ref();
@@ -129,6 +132,7 @@ void PengRobinsonGasPhase::getStandardChemPotentials(doublereal* muStar) const
 
 //  Partial Molar Properties of the Solution --------------
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getChemPotentials(doublereal* mu) const
 {
     getStandardChemPotentials(mu);
@@ -148,13 +152,13 @@ void PengRobinsonGasPhase::getPartialMolarEnthalpies(doublereal* hbar) const
     _updateThermoRealFluid();
     const vector_fp& _h = enthalpy_RT_ref();
     doublereal rt = GasConstant * temperature();
-    vector_fp hbar0(m_kk);
-    scale(_h.begin(), _h.end(), &hbar0[0], rt);
+    scale(_h.begin(), _h.end(), &hbar[0], rt);
     doublereal temp = Am - temperature() * dAmdT;
     for (size_t k = 0; k < m_kk; k++) {
-        hbar[k] = hbar0[k] - rt + dK1dN[k] * temp +
-                  K1 * (dAmdN[k] - temperature() * d2AmdTdN[k]) +
-                  pressure() * dVdN[k];
+        if (IsCrit[k] == 0) continue;
+        hbar[k] -= rt + dK1dN[k] * temp +
+                   K1 * (dAmdN[k] - temperature() * d2AmdTdN[k]) +
+                   pressure() * dVdN[k];
         // hbar[k] = hbar0[k];
         // printf("T = %.5g, k = %d, X = %.5g, hbar = %.5g, hbar0 = %.5g,
         // departure
@@ -166,6 +170,7 @@ void PengRobinsonGasPhase::getPartialMolarEnthalpies(doublereal* hbar) const
     }
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getPartialMolarEntropies(doublereal* sbar) const
 {
     const vector_fp& _s = entropy_R_ref();
@@ -177,6 +182,7 @@ void PengRobinsonGasPhase::getPartialMolarEntropies(doublereal* sbar) const
     }
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getPartialMolarIntEnergies(doublereal* ubar) const
 {
     const vector_fp& _h = enthalpy_RT_ref();
@@ -186,12 +192,14 @@ void PengRobinsonGasPhase::getPartialMolarIntEnergies(doublereal* ubar) const
     }
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getPartialMolarCp(doublereal* cpbar) const
 {
     const vector_fp& _cp = cp_R_ref();
     scale(_cp.begin(), _cp.end(), cpbar, GasConstant);
 }
 
+// TODO: this is currently the same as in IdealGasPhase
 void PengRobinsonGasPhase::getPartialMolarVolumes(doublereal* vbar) const
 {
     double vol = 1.0 / molarDensity();
@@ -201,6 +209,7 @@ void PengRobinsonGasPhase::getPartialMolarVolumes(doublereal* vbar) const
 }
 
 // Properties of the Standard State of the Species in the Solution --
+// TODO: these are all currently the same as in IdealGasPhase
 
 void PengRobinsonGasPhase::getEnthalpy_RT(doublereal* hrt) const
 {
@@ -332,19 +341,17 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
     //! \brief Reads critical properties based on JP's papaer
     for (size_t k = 0; k < m_kk; k++) {
         if (speciesName(k) == "H2") {
-            //Tcrit[k] = 33.0; // K
-            //Pcrit[k] = 1.284e+6; // Pa
-            //Vcrit[k] = 64.28e-3; // m3/kmol
-            Tcrit[k] = 33.145; // K
+            IsCrit[k] = 1;
+            Tcrit[k] = 33.145;    // K
             Pcrit[k] = 1.2964e+6; // Pa
             Vcrit[k] = 64.4834e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
             Zcrit[k] = (Pcrit[k] * Vcrit[k]) / (GasConstant * Tcrit[k]);
-            //omega[k] = -0.216;
             omega[k] = -0.219;
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "O2") {
+            IsCrit[k] = 1;
             Tcrit[k] = 154.5800; // K
             Pcrit[k] = 5.0430e+6; // Pa
             Vcrit[k] = 73.3682e-3; // m3/kmol
@@ -354,7 +361,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "H2O") {
-            Tcrit[k] = 647.10; // K
+            IsCrit[k] = 1;
+            Tcrit[k] = 647.10;    // K
             Pcrit[k] = 22.064e+6; // Pa
             Vcrit[k] = 55.95e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -363,7 +371,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 1.855;
         } else if (speciesName(k) == "O") {
-            Tcrit[k] = 105.28; // K
+            IsCrit[k] = 0;
+            Tcrit[k] = 105.28;   // K
             Pcrit[k] = 7.088e+6; // Pa
             Vcrit[k] = 41.21e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -372,6 +381,7 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "H") {
+            IsCrit[k] = 0;
             Tcrit[k] = 190.82; // K
             Pcrit[k] = 31.013e+6; // Pa
             Vcrit[k] = 17.07e-3; // m3/kmol
@@ -381,7 +391,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "OH") {
-            Tcrit[k] = 105.28; // K
+            IsCrit[k] = 0;
+            Tcrit[k] = 105.28;   // K
             Pcrit[k] = 7.088e+6; // Pa
             Vcrit[k] = 41.21e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -390,7 +401,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "H2O2") {
-            Tcrit[k] = 141.34; // K
+            IsCrit[k] = 0;
+            Tcrit[k] = 141.34;   // K
             Pcrit[k] = 4.786e+6; // Pa
             Vcrit[k] = 81.93e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -399,7 +411,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "HO2") {
-            Tcrit[k] = 141.34; // K
+            IsCrit[k] = 0;
+            Tcrit[k] = 141.34;   // K
             Pcrit[k] = 4.786e+6; // Pa
             Vcrit[k] = 81.93e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -408,7 +421,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "N2") {
-            Tcrit[k] = 126.19; // K
+            IsCrit[k] = 0;
+            Tcrit[k] = 126.19;    // K
             Pcrit[k] = 3.3958e+6; // Pa
             Vcrit[k] = 89.41e-3; // m3/kmol
             rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
@@ -417,7 +431,8 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else {
-            cout << " WARNING -> Unknown species : " << speciesName(k) << ". No critical properties found." << endl;
+            cout << " Unknown or non-major species : " << speciesName(k)
+                 << ". All critical properties were set to zero." << endl;
         }
     }
 }
@@ -426,7 +441,10 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
 {
     //! \brief Assign arrays of critical point data
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
         for (size_t l = 0; l < m_kk; l++) {
+            if (IsCrit[l] == 0) continue;
+
             int apos = k * m_kk + l;
 
             // binary interation parameter
@@ -443,6 +461,8 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
 
     //! \brief Assign constants used for computing real fluid effects
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         cst_b[k] = 0.077796 * GasConstant * Tcrit[k] / Pcrit[k];
         for (size_t l = 0; l < m_kk; l++) {
             int apos = k * m_kk + l;
@@ -454,6 +474,8 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
     // compute Bm
     Bm = 0.0;
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         Bm += moleFraction(k) * cst_b[k];
     }
 }
@@ -466,9 +488,12 @@ void PengRobinsonGasPhase::SetRealFluidThermodynamics() const
     d2AmdT2 = 0.0;
     double temp = molarVolume() * molarVolume() + 2.0 * Bm * molarVolume() - Bm * Bm;
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         dAmdN[k] = 0.0;
         d2AmdTdN[k] = 0.0;
         for (size_t l = 0; l < m_kk; l++) {
+            if (IsCrit[l] == 0) continue;
             int apos = k * m_kk + l;
 
             double X_X = moleFraction(l) * moleFraction(k);
@@ -495,6 +520,8 @@ void PengRobinsonGasPhase::SetRealFluidThermodynamics() const
     K1 = 1.0 / (sqrt(8.0) * Bm) * log((molarVolume() + (1 - sqrt(2.0)) * Bm) / (molarVolume() + (1 + sqrt(2.0)) * Bm));
 
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         dPdN[k] = GasConstant * temperature() / (molarVolume() - Bm) + GasConstant * temperature() * cst_b[k] / pow((molarVolume() - Bm), 2)
             - dAmdN[k] / temp + 2.0 * Am * cst_b[k] * (molarVolume() - Bm) / pow(temp, 2);
         dVdN[k] = -dPdN[k] / dPdV;
@@ -661,6 +688,7 @@ bool PengRobinsonGasPhase::addSpecies(shared_ptr<Species> spec)
         m_pp.push_back(0.0);
 
         // real fluid stuff
+        IsCrit.push_back(0);
         Tcrit.push_back(0.0);
         Pcrit.push_back(0.0);
         rhocrit.push_back(0.0);
@@ -714,13 +742,11 @@ void PengRobinsonGasPhase::_updateThermo() const
     if (cached.state1 != tnow) {
         m_spthermo->update(tnow, &m_cp0_R[0], &m_h0_RT[0], &m_s0_R[0]);
         cached.state1 = tnow;
-
         // update the species Gibbs functions
         for (size_t k = 0; k < m_kk; k++) {
             m_g0_RT[k] = m_h0_RT[k] - m_s0_R[k];
         }
     }
-
 }
 
 void PengRobinsonGasPhase::_updateThermoRealFluid() const
