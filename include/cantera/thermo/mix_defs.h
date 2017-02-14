@@ -6,7 +6,6 @@
 
 namespace Cantera
 {
-
 /**
  * This generic id is used as the default in virtual base classes that employ
  * id's. It is used to indicate the lack of an inherited class that would define
@@ -30,13 +29,15 @@ const int cHarmonicOsc = 4;
  *
  * Users who wish to define their own equation of states which derive from
  * ThermoPhase should define a unique id which doesn't conflict with those
- * listed below. The Cantera Kernel however, will not be know about the class
+ * listed below. The Cantera Kernel however, will not be known about the class
  * and will therefore not be able to initialize the class within its "factory"
  * routines.
  * @deprecated To be removed after Cantera 2.3.
  */
 const int cIdealGas = 1; // IdealGasPhase in IdealGasPhase.h
 const int cIncompressible = 2; // ConstDensityThermo in ConstDensityThermo.h
+const int cPengRobinsonGas = 15; // PengRobinsonGasPhase in PengRobinsonGasPhase.h
+
 /// A surface phase. Used by class SurfPhase.
 const int cSurf = 3;
 
@@ -134,7 +135,6 @@ enum VPSSMgr_enumType {
     //! general representations
     cVPSSMGR_GENERAL
 };
-
 
 // kinetic manager types
 // @deprecated To be removed after Cantera 2.3.
