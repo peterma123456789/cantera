@@ -706,6 +706,7 @@ void ThermoPhase::initThermo()
                            "Missing species thermo data");
     }
 }
+
 void ThermoPhase::installSlavePhases(XML_Node* phaseNode)
 {
     warn_deprecated("ThermoPhase::installSlavePhases",
