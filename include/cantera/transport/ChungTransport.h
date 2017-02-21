@@ -49,8 +49,12 @@ public:
         return cChung;
     }
 
+    virtual std::string transportType() const { return "Chung"; }
+
+    // Chung's high pressure viscosity, mole-fraction averaged
     virtual doublereal viscosity();
 
+    // Chung's high pressure thermal conductivity, mole-fraction averaged
     virtual double thermalConductivity();
 
     // this is where we modify binary diff coeffs with Takahashi
