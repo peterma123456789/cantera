@@ -8,7 +8,6 @@
 
 // Cantera includes
 #include "GasTransport.h"
-#include "cantera/numerics/DenseMatrix.h"
 #include "cantera/transport/MultiTransport.h"
 
 namespace Cantera

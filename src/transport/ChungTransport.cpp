@@ -42,7 +42,6 @@ void ChungTransport::init(ThermoPhase* thermo, int mode, int log_level)
         dipole.push_back(0.0);
         kappa.push_back(0.0);
     }
-
     ReadCriticalProperties();
 }
 

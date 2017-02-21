@@ -44,6 +44,7 @@ const int cMixtureAveragedEz = 212;
 const int CK_MixtureAveraged = 211;
 const int cHighP = 270;
 const int cChung = 250;
+const int cBlend = 251;
 const int cSolidTransport = 300;
 const int cDustyGasTransport = 400;
 const int cUserTransport = 500;
