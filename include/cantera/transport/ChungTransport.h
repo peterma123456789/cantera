@@ -53,7 +53,7 @@ public:
     virtual doublereal viscosity();
 
     // Chung's high pressure thermal conductivity, mole-fraction averaged
-    virtual double thermalConductivity();
+    virtual doublereal thermalConductivity();
 
     // this is where we modify binary diff coeffs with Takahashi
     // and this will be used when we evaluate multidiff and thermaldiff
