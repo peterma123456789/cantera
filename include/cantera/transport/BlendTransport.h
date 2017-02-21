@@ -26,6 +26,10 @@ namespace Cantera
 class BlendTransport : public ChungTransport
 {
 public:
+    //! default constructor
+    /*!
+     *   @param thermo  Optional parameter for the pointer to the ThermoPhase object
+     */
     BlendTransport(thermo_t* thermo = 0) {}
 
     virtual int model() const
@@ -69,7 +73,7 @@ private:
         doublereal TcMix = 0.0;
         for (size_t k = 0; k < m_nsp; k++)
             TcMix += m_molefracs[k] * Tcrit[k];
-        return 2*TcMix;
+        return 2 * TcMix;
     }
 };
 

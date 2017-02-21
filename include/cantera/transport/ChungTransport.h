@@ -81,12 +81,6 @@ protected:
     vector_fp omega;
     vector_fp dipole;
     vector_fp kappa;
-
-    vector_fp sigma_IJ;
-    vector_fp epsOverk_IJ;
-    vector_fp omega_IJ;
-    vector_fp MW_IJ;
-    vector_fp kappa_IJ;
 };
 
 }
