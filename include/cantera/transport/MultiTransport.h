@@ -207,4 +207,5 @@ protected:
     bool m_debug;
 };
 }
+
 #endif

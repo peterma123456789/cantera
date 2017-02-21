@@ -67,15 +67,14 @@ public:
     /*!
      * @return cMixtureAverage
      */
-    virtual int model() const {
+    virtual int model() const
+    {
         warn_deprecated("MixTransport::model",
                         "To be removed after Cantera 2.3.");
         return cMixtureAveraged;
     }
 
-    virtual std::string transportType() const {
-        return "Mix";
-    }
+    virtual std::string transportType() const { return "Mix"; }
 
     //! Return the thermal diffusion coefficients
     /*!
@@ -167,7 +166,8 @@ public:
 
 private:
     //! Calculate the pressure from the ideal gas law
-    doublereal pressure_ig() const {
+    doublereal pressure_ig() const
+    {
         return (m_thermo->molarDensity() * GasConstant *
                 m_thermo->temperature());
     }
@@ -203,4 +203,5 @@ private:
     bool m_debug;
 };
 }
+
 #endif

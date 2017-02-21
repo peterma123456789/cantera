@@ -91,16 +91,16 @@ doublereal MultiTransport::thermalConductivity()
 {
     solveLMatrixEquation();
     doublereal sum = 0.0;
-    for (size_t k = 0; k  < 2*m_nsp; k++) {
+    for (size_t k = 0; k < 2 * m_nsp; k++) {
         sum += m_b[k + m_nsp] * m_a[k + m_nsp];
     }
-    return -4.0*sum;
+    return -4.0 * sum;
 }
 
 void MultiTransport::getThermalDiffCoeffs(doublereal* const dt)
 {
     solveLMatrixEquation();
-    const doublereal c = 1.6/GasConstant;
+    const doublereal c = 1.6 / GasConstant;
     for (size_t k = 0; k < m_nsp; k++) {
         dt[k] = c * m_mw[k] * m_molefracs[k] * m_a[k];
     }
