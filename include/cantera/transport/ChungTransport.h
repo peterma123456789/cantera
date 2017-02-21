@@ -38,7 +38,7 @@ public:
     /*!
      *   @param thermo  Optional parameter for the pointer to the ThermoPhase object
      */
-    ChungTransport(thermo_t* thermo=0);
+    ChungTransport(thermo_t* thermo = 0){};
 
     virtual int model() const
     {

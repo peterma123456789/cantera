@@ -17,8 +17,6 @@ using namespace std;
 namespace Cantera
 {
 
-ChungTransport::ChungTransport(thermo_t* thermo) : MultiTransport(thermo) {}
-
 void ChungTransport::init(ThermoPhase* thermo, int mode, int log_level)
 {
     MultiTransport::init(thermo, mode, log_level);
