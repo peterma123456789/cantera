@@ -8,7 +8,8 @@
 
 #include "Domain1D.h"
 #include "cantera/base/Array.h"
-#include "cantera/thermo/IdealGasPhase.h"
+//#include "cantera/thermo/IdealGasPhase.h"
+#include "cantera/thermo/ThermoPhase.h"
 #include "cantera/kinetics/Kinetics.h"
 
 namespace Cantera
@@ -44,7 +45,8 @@ public:
     //!     to evaluate all thermodynamic, kinetic, and transport properties.
     //! @param nsp Number of species.
     //! @param points Initial number of grid points
-    StFlow(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1);
+    //StFlow(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1);
+    StFlow(ThermoPhase* ph = 0, size_t nsp = 1, size_t points = 1);
 
     //! @name Problem Specification
     //! @{
@@ -65,7 +67,8 @@ public:
      * Set the thermo manager. Note that the flow equations assume
      * the ideal gas equation.
      */
-    void setThermo(IdealGasPhase& th) {
+    //void setThermo(IdealGasPhase& th) {
+    void setThermo(ThermoPhase& th) {
         m_thermo = &th;
     }
 
@@ -260,6 +263,7 @@ protected:
             m_rho[j] = m_thermo->density();
             m_wtm[j] = m_thermo->meanMolecularWeight();
             m_cp[j] = m_thermo->cp_mass();
+            m_thermo->getPartialMolarEnthalpies(&m_hbar[j * m_nsp]);
         }
     }
 
@@ -333,6 +337,12 @@ protected:
         size_t jloc = (u(x,j) > 0.0 ? j : j + 1);
         return (T(x,jloc) - T(x,jloc-1))/m_dz[jloc-1];
     }
+
+    doublereal dhbardz(const doublereal* x, size_t j, size_t k) const {
+        size_t jloc = (u(x,j) > 0.0 ? j : j + 1);
+        return (m_hbar[jloc * m_nsp + k] - m_hbar[(jloc - 1) * m_nsp + k]) /
+               m_dz[jloc - 1];
+    }
     //! @}
 
     doublereal shear(const doublereal* x, size_t j) const {
@@ -370,6 +380,7 @@ protected:
     // species thermo properties
     vector_fp m_wt;
     vector_fp m_cp;
+    vector_fp m_hbar;
 
     // transport properties
     vector_fp m_visc;
@@ -384,7 +395,8 @@ protected:
 
     size_t m_nsp;
 
-    IdealGasPhase* m_thermo;
+    //IdealGasPhase* m_thermo;
+    ThermoPhase* m_thermo;
     Kinetics* m_kin;
     Transport* m_trans;
 
@@ -437,7 +449,8 @@ private:
 class AxiStagnFlow : public StFlow
 {
 public:
-    AxiStagnFlow(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1) :
+    //AxiStagnFlow(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1) :
+    AxiStagnFlow(ThermoPhase* ph = 0, size_t nsp = 1, size_t points = 1) :
         StFlow(ph, nsp, points) {
         m_dovisc = true;
     }
@@ -459,7 +472,8 @@ public:
 class FreeFlame : public StFlow
 {
 public:
-    FreeFlame(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1);
+    //FreeFlame(IdealGasPhase* ph = 0, size_t nsp = 1, size_t points = 1);
+    FreeFlame(ThermoPhase* ph = 0, size_t nsp = 1, size_t points = 1);
     virtual void evalRightBoundary(doublereal* x, doublereal* res,
                                    integer* diag, doublereal rdt);
     virtual void evalContinuity(size_t j, doublereal* x, doublereal* r,
