@@ -49,3 +49,4 @@ doc/sphinx/matlab/tutorials/
 doc/sphinx/matlab/code-docs/
 *.swp
 *.idea/*
+*cantera.xcodeproj/*
