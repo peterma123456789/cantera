@@ -12,6 +12,7 @@
 #include "cantera/transport/SimpleTransport.h"
 #include "cantera/transport/LiquidTransport.h"
 #include "cantera/transport/HighPressureGasTransport.h"
+#include "cantera/transport/ChungTransport.h"
 #include "cantera/transport/TransportFactory.h"
 #include "cantera/transport/SolidTransportData.h"
 #include "cantera/base/ctml.h"
@@ -53,6 +54,7 @@ TransportFactory::TransportFactory()
     reg("CK_Mix", []() { return new MixTransport(); });
     reg("CK_Multi", []() { return new MultiTransport(); });
     reg("HighP", []() { return new HighPressureGasTransport(); });
+    reg("Chung", []() { return new ChungTransport(); });
     m_CK_mode["CK_Mix"] = true;
     m_CK_mode["CK_Multi"] = true;
 
@@ -67,6 +69,7 @@ TransportFactory::TransportFactory()
     m_models["Simple"] = cSimpleTransport;
     m_models["User"] = cUserTransport;
     m_models["HighP"] = cHighP;
+    m_models["Chung"] = cChung;
     m_models["None"] = None;
     for (const auto& model : m_models) {
         m_modelNames[model.second] = model.first;

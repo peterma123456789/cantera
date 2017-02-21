@@ -32,7 +32,8 @@ public:
      */
     MultiTransport(thermo_t* thermo=0);
 
-    virtual int model() const {
+    virtual int model() const
+    {
         warn_deprecated("MultiTransport::model",
                         "To be removed after Cantera 2.3.");
         if (m_mode == CK_Mode) {
@@ -42,9 +43,7 @@ public:
         }
     }
 
-    virtual std::string transportType() const {
-        return "Multi";
-    }
+    virtual std::string transportType() const { return "Multi"; }
 
     //! Return the thermal diffusion coefficients (kg/m/s)
     /*!
