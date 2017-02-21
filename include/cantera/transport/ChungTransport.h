@@ -7,8 +7,7 @@
 #define CT_TRANSCRITICALTRAN_H
 
 // Cantera includes
-#include "GasTransport.h"
-#include "cantera/transport/MultiTransport.h"
+#include "MultiTransport.h"
 
 namespace Cantera
 {

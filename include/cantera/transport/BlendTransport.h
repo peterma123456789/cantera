@@ -7,8 +7,7 @@
 #define CT_BLENDTRAN_H
 
 // Cantera includes
-#include "GasTransport.h"
-#include "cantera/transport/ChungTransport.h"
+#include "ChungTransport.h"
 
 namespace Cantera
 {
