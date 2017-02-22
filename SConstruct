@@ -248,6 +248,7 @@ defaults.noDebugLinkFlags = ''
 defaults.warningFlags = '-Wall'
 defaults.buildPch = False
 env['pch_flags'] = []
+env['openmp_flag'] = '-fopenmp' # used to generate sample build scripts
 
 if 'gcc' in env.subst('$CC'):
     defaults.optimizeCcFlags += ' -Wno-inline'
@@ -270,11 +271,13 @@ elif env['CC'] == 'cl': # Visual Studio
     defaults.warningFlags = '/W3'
     defaults.buildPch = True
     env['pch_flags'] = ['/FIpch/system.h']
+    env['openmp_flag'] = '/openmp'
 
 elif 'icc' in env.subst('$CC'):
     defaults.cxxFlags = '-std=c++11'
     defaults.ccFlags = '-qopt-report2 -qopt-report-phase=vec'
     defaults.warningFlags = '-Wcheck'
+    env['openmp_flag'] = '-openmp'
 
 elif 'clang' in env.subst('$CC'):
     defaults.ccFlags = '-fcolor-diagnostics'
@@ -299,7 +302,7 @@ else:
     defaults.versionedSharedLibrary = True
 
 defaults.fsLayout = 'compact' if env['OS'] == 'Windows' else 'standard'
-defaults.env_vars = 'LD_LIBRARY_PATH,PYTHONPATH'
+defaults.env_vars = 'PATH,LD_LIBRARY_PATH,PYTHONPATH'
 
 defaults.python_prefix = '$prefix' if env['OS'] != 'Windows' else ''
 
@@ -694,10 +697,15 @@ if env['env_vars'] == 'all':
     if 'PYTHONHOME' in env['ENV']:
         del env['ENV']['PYTHONHOME']
 elif env['env_vars']:
-    for name in listify(env['env_vars']):
+    for name in env['env_vars'].split(','):
         if name in os.environ:
-            env['ENV'][name] = os.environ[name]
-        elif name not in defaults.env_vars:
+            if name == 'PATH':
+                env.AppendENVPath('PATH', os.environ['PATH'])
+            else:
+                env['ENV'][name] = os.environ[name]
+            if env['VERBOSE']:
+                print 'Propagating environment variable {0}={1}'.format(name, env['ENV'][name])
+        elif name not in defaults.env_vars.split(','):
             print 'WARNING: failed to propagate environment variable', repr(name)
             print '         Edit cantera.conf or the build command line to fix this.'
 

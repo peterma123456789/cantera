@@ -24,54 +24,48 @@ namespace Cantera {
  */
 class GasKinetics : public BulkKinetics {
 public:
-  //! @name Constructors and General Information
-  //! @{
+    //! @name Constructors and General Information
+    //! @{
 
-  //! Constructor.
-  /*!
-   *  @param thermo  Pointer to the gas ThermoPhase (optional)
-   */
-  GasKinetics(thermo_t *thermo = 0);
+    //! Constructor.
+    /*!
+     *  @param thermo  Pointer to the gas ThermoPhase (optional)
+     */
+    GasKinetics(thermo_t* thermo = 0);
+    
+    void reduceFrom(const GasKinetics &, const std::vector<std::uint8_t> &);
+    
+    virtual std::string kineticsType() const {
+        return "Gas";
+    }
 
-  void reduceFrom(const GasKinetics &, const std::vector<std::uint8_t> &);
+    //! @}
+    //! @name Reaction Rates Of Progress
+    //! @{
 
-  virtual Kinetics *
-  duplMyselfAsKinetics(const std::vector<thermo_t *> &tpVector) const;
+    virtual void getEquilibriumConstants(doublereal* kc);
+    virtual void getFwdRateConstants(doublereal* kfwd);
 
-  virtual int type() const {
-    warn_deprecated("GasKinetics::type", "To be removed after Cantera 2.3.");
-    return cGasKinetics;
-  }
+    //! @}
+    //! @name Reaction Mechanism Setup Routines
+    //! @{
+    virtual void init();
+    virtual bool addReaction(shared_ptr<Reaction> r);
+    virtual void modifyReaction(size_t i, shared_ptr<Reaction> rNew);
+    virtual void invalidateCache();
+    //@}
 
-  virtual std::string kineticsType() const { return "Gas"; }
+    void updateROP();
 
-  //! @}
-  //! @name Reaction Rates Of Progress
-  //! @{
+    //! Update temperature-dependent portions of reaction rates and falloff
+    //! functions.
+    virtual void update_rates_T();
 
-  virtual void getEquilibriumConstants(doublereal *kc);
-  virtual void getFwdRateConstants(doublereal *kfwd);
-
-  //! @}
-  //! @name Reaction Mechanism Setup Routines
-  //! @{
-  virtual void init();
-  virtual bool addReaction(shared_ptr<Reaction> r);
-  virtual void modifyReaction(size_t i, shared_ptr<Reaction> rNew);
-  virtual void invalidateCache();
-  //@}
-
-  void updateROP();
-
-  //! Update temperature-dependent portions of reaction rates and falloff
-  //! functions.
-  virtual void update_rates_T();
-
-  //! Update properties that depend on concentrations.
-  //! Currently the enhanced collision partner concentrations are updated
-  //! here, as well as the pressure-dependent portion of P-log and Chebyshev
-  //! reactions.
-  virtual void update_rates_C();
+    //! Update properties that depend on concentrations.
+    //! Currently the enhanced collision partner concentrations are updated
+    //! here, as well as the pressure-dependent portion of P-log and Chebyshev
+    //! reactions.
+    virtual void update_rates_C();
 
 protected:
   //! Reaction index of each falloff reaction

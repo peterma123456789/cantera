@@ -127,52 +127,42 @@ void GasKinetics::reduceFrom(const GasKinetics &right,
   falloff_work.resize(m_falloffn.workSize());
 }
 
-Kinetics *GasKinetics::duplMyselfAsKinetics(
-    const std::vector<thermo_t *> &tpVector) const {
-  GasKinetics *gK = new GasKinetics(*this);
-  gK->assignShallowPointers(tpVector);
-  return gK;
-}
+void GasKinetics::update_rates_T()
+{
+    doublereal T = thermo().temperature();
+    doublereal P = thermo().pressure();
+    m_logStandConc = log(thermo().standardConcentration());
+    doublereal logT = log(T);
 
-void GasKinetics::update_rates_T() {
-  doublereal T = thermo().temperature();
-  doublereal P = thermo().pressure();
-  m_logStandConc = log(thermo().standardConcentration());
-  doublereal logT = log(T);
+    if (T != m_temp) {
+        if (!m_rfn.empty()) {
+            m_rates.update(T, logT, m_rfn.data());
+        }
 
-  if (T != m_temp) {
-    if (!m_rfn.empty()) {
-      std::fill(m_rfn.begin(), m_rfn.end(), 0.0);
-      m_rates.update(T, logT, m_rfn.data());
+        if (!m_rfn_low.empty()) {
+            m_falloff_low_rates.update(T, logT, m_rfn_low.data());
+            m_falloff_high_rates.update(T, logT, m_rfn_high.data());
+        }
+        if (!falloff_work.empty()) {
+            m_falloffn.updateTemp(T, falloff_work.data());
+        }
+        updateKc();
+        m_ROP_ok = false;
     }
 
-    if (!m_rfn_low.empty()) {
-      std::fill(m_rfn_low.begin(), m_rfn_low.end(), 0.0);
-      std::fill(m_rfn_high.begin(), m_rfn_high.end(), 0.0);
-      m_falloff_low_rates.update(T, logT, m_rfn_low.data());
-      m_falloff_high_rates.update(T, logT, m_rfn_high.data());
-    }
-    if (!falloff_work.empty()) {
-      std::fill(falloff_work.begin(), falloff_work.end(), 0.0);
-      m_falloffn.updateTemp(T, falloff_work.data());
-    }
-    updateKc();
-    m_ROP_ok = false;
-  }
+    if (T != m_temp || P != m_pres) {
+        if (m_plog_rates.nReactions()) {
+            m_plog_rates.update(T, logT, m_rfn.data());
+            m_ROP_ok = false;
+        }
 
-  if (T != m_temp || P != m_pres) {
-    if (m_plog_rates.nReactions()) {
-      m_plog_rates.update(T, logT, m_rfn.data());
-      m_ROP_ok = false;
+        if (m_cheb_rates.nReactions()) {
+            m_cheb_rates.update(T, logT, m_rfn.data());
+            m_ROP_ok = false;
+        }
     }
-
-    if (m_cheb_rates.nReactions()) {
-      m_cheb_rates.update(T, logT, m_rfn.data());
-      m_ROP_ok = false;
-    }
-  }
-  m_pres = P;
-  m_temp = T;
+    m_pres = P;
+    m_temp = T;
 }
 
 void GasKinetics::update_rates_C() {

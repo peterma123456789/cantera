@@ -18,7 +18,6 @@
 #include "cantera/thermo/ConstCpPoly.h"
 #include "cantera/thermo/AdsorbateThermo.h"
 #include "cantera/thermo/speciesThermoTypes.h"
-#include "cantera/thermo/VPSSMgr.h"
 #include "cantera/thermo/VPStandardStateTP.h"
 #include "cantera/base/ctml.h"
 #include "cantera/base/stringUtils.h"
@@ -397,7 +396,8 @@ SpeciesThermoInterpType* newSpeciesThermoInterpType(const XML_Node& thermo)
     for (size_t i = 1; i < tp.size(); i++) {
         if (!ba::iequals(tp[i]->name(), thermoType)) {
             throw CanteraError("newSpeciesThermoInterpType",
-                "Encountered unsupported mixed species thermo parameterizations");
+                "Encountered unsupported mixed species thermo "
+                "parameterizations, '{}' and '{}'", tp[i]->name(), thermoType);
         }
     }
     if ((tp.size() > 2 && thermoType != "nasa9") ||

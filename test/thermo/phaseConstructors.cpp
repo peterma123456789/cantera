@@ -1,7 +1,11 @@
 #include "gtest/gtest.h"
 #include "cantera/thermo/ThermoFactory.h"
 #include "cantera/thermo/FixedChemPotSSTP.h"
+#include "cantera/thermo/PureFluidPhase.h"
+#include "cantera/thermo/WaterSSTP.h"
+#include "cantera/thermo/RedlichKwongMFTP.h"
 #include "cantera/thermo/NasaPoly2.h"
+#include "cantera/thermo/ShomatePoly.h"
 #include "cantera/thermo/IdealGasPhase.h"
 #include "cantera/base/ctml.h"
 #include "cantera/base/stringUtils.h"
@@ -111,15 +115,15 @@ public:
         sO2->thermo.reset(new NasaPoly2(200, 3500, 101325, o2_nasa_coeffs));
         sOH->thermo.reset(new NasaPoly2(200, 3500, 101325, oh_nasa_coeffs));
         sCO->thermo.reset(new NasaPoly2(200, 3500, 101325, o2_nasa_coeffs));
-        sCO2->thermo.reset(new NasaPoly2(200, 3500, 101325, h2o_nasa_coeffs));
+        sCO2->thermo.reset(new ShomatePoly2(200, 3500, 101325, co2_shomate_coeffs));
     }
 
-    IdealGasPhase p;
     shared_ptr<Species> sH2O, sH2, sO2, sOH, sCO, sCO2;
 };
 
 TEST_F(ConstructFromScratch, AddElements)
 {
+    IdealGasPhase p;
     p.addElement("H");
     p.addElement("O");
     ASSERT_EQ((size_t) 2, p.nElements());
@@ -129,6 +133,7 @@ TEST_F(ConstructFromScratch, AddElements)
 
 TEST_F(ConstructFromScratch, AddSpeciesDefaultBehavior)
 {
+    IdealGasPhase p;
     p.addElement("H");
     p.addElement("O");
     p.addSpecies(sH2O);
@@ -148,6 +153,7 @@ TEST_F(ConstructFromScratch, AddSpeciesDefaultBehavior)
 
 TEST_F(ConstructFromScratch, ignoreUndefinedElements)
 {
+    IdealGasPhase p;
     p.addElement("H");
     p.addElement("O");
     p.ignoreUndefinedElements();
@@ -165,6 +171,7 @@ TEST_F(ConstructFromScratch, ignoreUndefinedElements)
 
 TEST_F(ConstructFromScratch, addUndefinedElements)
 {
+    IdealGasPhase p;
     p.addElement("H");
     p.addElement("O");
     p.addUndefinedElements();
@@ -182,6 +189,54 @@ TEST_F(ConstructFromScratch, addUndefinedElements)
     ASSERT_EQ((size_t) 2, p.nAtoms(p.speciesIndex("co2"), p.elementIndex("O")));
     p.setMassFractionsByName("H2:0.5, CO2:0.5");
     ASSERT_DOUBLE_EQ(0.5, p.massFraction("CO2"));
+}
+
+TEST_F(ConstructFromScratch, RedlichKwongMFTP)
+{
+    RedlichKwongMFTP p;
+    p.addUndefinedElements();
+    p.addSpecies(sCO2);
+    p.addSpecies(sH2O);
+    p.addSpecies(sH2);
+    double fa = toSI("bar-cm6/mol2");
+    double fb = toSI("cm3/mol");
+    p.setBinaryCoeffs("H2", "H2O", 4 * fa, 40 * fa);
+    p.setSpeciesCoeffs("CO2", 7.54e7 * fa, -4.13e4 * fa, 27.80 * fb);
+    p.setBinaryCoeffs("CO2", "H2O", 7.897e7 * fa, 0.0);
+    p.setSpeciesCoeffs("H2O", 1.7458e8 * fa, -8e4 * fa, 18.18 * fb);
+    p.setSpeciesCoeffs("H2", 30e7 * fa, -330e4 * fa, 31 * fb);
+    p.initThermo();
+    p.setMoleFractionsByName("CO2:0.9998, H2O:0.0002");
+    p.setState_TP(300, 200 * OneAtm);
+    EXPECT_NEAR(p.pressure(), 200 * OneAtm, 1e-5);
+    // Arbitrary regression test values
+    EXPECT_NEAR(p.density(), 892.421, 2e-3);
+    EXPECT_NEAR(p.enthalpy_mole(), -404848642.3797, 1e-3);
+}
+
+TEST(PureFluidFromScratch, CarbonDioxide)
+{
+    PureFluidPhase p;
+    auto sCO2 = make_shared<Species>("CO2", parseCompString("C:1 O:2"));
+    sCO2->thermo.reset(new ShomatePoly2(200, 6000, 101325, co2_shomate_coeffs));
+    p.addUndefinedElements();
+    p.addSpecies(sCO2);
+    p.setSubstance("carbondioxide");
+    p.initThermo();
+    p.setState_Tsat(280, 0.5);
+    EXPECT_NEAR(p.pressure(), 4160236.987, 1e-2);
+}
+
+TEST(WaterSSTP, fromScratch)
+{
+    WaterSSTP water;
+    auto sH2O = make_shared<Species>("H2O", parseCompString("H:2 O:1"));
+    sH2O->thermo.reset(new NasaPoly2(200, 3500, 101325, h2o_nasa_coeffs)); // unused
+    water.addUndefinedElements();
+    water.addSpecies(sH2O);
+    water.initThermo();
+    water.setState_TP(298.15, 1e5);
+    EXPECT_NEAR(water.enthalpy_mole() / 1e6, -285.83, 2e-2);
 }
 
 } // namespace Cantera

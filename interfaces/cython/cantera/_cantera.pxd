@@ -567,7 +567,7 @@ cdef extern from "cantera/zeroD/ReactorNet.h":
         CxxReactorNet()
         void addReactor(CxxReactor&)
         void advance(double) except +translate_exception
-        double step(double) except +translate_exception
+        double step() except +translate_exception
         void reinitialize() except +translate_exception
         double time()
         void setInitialTime(double)
@@ -631,8 +631,6 @@ cdef extern from "cantera/oneD/Domain1D.h":
         void setupGrid(size_t, double*) except +translate_exception
         void setID(string)
         string& id()
-        void setDesc(string)
-        string& desc()
 
 
 cdef extern from "cantera/oneD/Inlet1D.h":
@@ -725,6 +723,7 @@ cdef extern from "cantera/oneD/Sim1D.h":
         int domainIndex(string) except +translate_exception
         double value(size_t, size_t, size_t) except +translate_exception
         double workValue(size_t, size_t, size_t) except +translate_exception
+        void eval(double ) except +translate_exception
         size_t size()
         void solveAdjoint(const double*, double*) except +translate_exception
         void getResidual(double, double*) except +translate_exception

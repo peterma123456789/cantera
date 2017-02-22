@@ -19,7 +19,7 @@ class ElementaryReaction;
 //! Partial specialization of Kinetics for chemistry in a single bulk phase
 class BulkKinetics : public Kinetics {
 public:
-  BulkKinetics(thermo_t *thermo = 0);
+  BulkKinetics(thermo_t* thermo = 0);
 
   virtual Kinetics *
   duplMyselfAsKinetics(const std::vector<thermo_t *> &tpVector) const;
