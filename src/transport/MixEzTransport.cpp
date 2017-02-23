@@ -20,38 +20,6 @@ MixEzTransport::MixEzTransport() :
 {
 }
 
-MixEzTransport::MixEzTransport(const MixEzTransport& right) :
-    GasTransport(right),
-    m_lambda(0.0),
-    m_spcond_ok(false),
-    m_condmix_ok(false),
-    m_debug(false)
-{
-    *this = right;
-}
-
-MixEzTransport& MixEzTransport::operator=(const MixEzTransport& right)
-{
-    if (&right == this) {
-        return *this;
-    }
-    GasTransport::operator=(right);
-
-    m_cond = right.m_cond;
-    m_lambda = right.m_lambda;
-    m_spcond_ok = right.m_spcond_ok;
-    m_condmix_ok = right.m_condmix_ok;
-    m_debug = right.m_debug;
-    m_sqrt_mw = right.m_sqrt_mw;
-    m_sqrt_rmw = right.m_sqrt_rmw;
-    return *this;
-}
-
-Transport* MixEzTransport::duplMyselfAsTransport() const
-{
-    return new MixEzTransport(*this);
-}
-
 doublereal MixEzTransport::viscosity()
 {
     update_T();

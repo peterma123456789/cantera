@@ -274,8 +274,8 @@ elif env['CC'] == 'cl': # Visual Studio
     env['openmp_flag'] = '/openmp'
 
 elif 'icc' in env.subst('$CC'):
-    defaults.cxxFlags = '-std=c++11'
-    defaults.ccFlags = '-qopt-report2 -qopt-report-phase=vec'
+    defaults.cxxFlags = '-std=c++0x'
+    defaults.ccFlags = '-vec-report0 -diag-disable 1478'
     defaults.warningFlags = '-Wcheck'
     env['openmp_flag'] = '-openmp'
 
@@ -473,12 +473,6 @@ config_options = [
            that should be passed to the linker, separated by commas, e.g.,
            "lapack,blas" or "lapack,f77blas,cblas,atlas".""",
         ''),
-    PathVariable(
-        'eigen_include',
-        """The directory where the eigen header files are installed.
-           Not needed if the libraries are installed in a standard location,
-           e.g. /usr/lib.""",
-        '', PathVariable.PathAccept),
     PathVariable(
         'blas_lapack_dir',
         """Directory containing the libraries specified by 'blas_lapack_libs'. Not
@@ -735,10 +729,6 @@ if env['system_sundials'] in ('y','default'):
     if env['sundials_libdir']:
         env.Append(LIBPATH=[env['sundials_libdir']])
         env['system_sundials'] = 'y'
-
-if env['eigen_include']:
-    env.Append(CPPPATH=[env['eigen_include']])
-    env['system_sundials'] = 'y'
 
 # BLAS / LAPACK configuration
 if env['blas_lapack_libs'] != '':
