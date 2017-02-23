@@ -121,8 +121,8 @@ public:
     virtual ~Kinetics();
 
     //! Kinetics objects are not copyable or assignable
-    Kinetics(const Kinetics&) = delete;
-    Kinetics& operator=(const Kinetics&)= delete;
+    // Kinetics(const Kinetics&) = delete;
+    // Kinetics& operator=(const Kinetics&)= delete;
 
     //! Identifies the Kinetics manager type.
     //! Each class derived from Kinetics should override this method to return
@@ -722,7 +722,7 @@ public:
      * Return the Reaction object for reaction *i*.
      */
     shared_ptr<Reaction> reaction(size_t i);
-    
+
     shared_ptr<const Reaction> reaction(size_t i) const;
 
     //! Determine behavior when adding a new reaction that contains species not
