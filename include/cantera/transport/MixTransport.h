@@ -153,7 +153,8 @@ public:
 
 private:
     //! Calculate the pressure from the ideal gas law
-    doublereal pressure_ig() const {
+    doublereal pressure_ig() const
+    {
         return (m_thermo->molarDensity() * GasConstant *
                 m_thermo->temperature());
     }
@@ -189,4 +190,5 @@ private:
     bool m_debug;
 };
 }
+
 #endif

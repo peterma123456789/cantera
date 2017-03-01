@@ -103,13 +103,13 @@ void GasTransport::updateViscosity_T()
     // see Eq. (9-5.15) of Reid, Prausnitz, and Poling
     for (size_t j = 0; j < m_nsp; j++) {
         for (size_t k = j; k < m_nsp; k++) {
-            double vratiokj = m_visc[k]/m_visc[j];
-            double wratiojk = m_mw[j]/m_mw[k];
+            double vratiokj = m_visc[k] / m_visc[j];
+            double wratiojk = m_mw[j] / m_mw[k];
 
             // Note that m_wratjk(k,j) holds the square root of m_wratjk(j,k)!
-            double factor1 = 1.0 + (m_sqvisc[k]/m_sqvisc[j]) * m_wratjk(k,j);
-            m_phi(k,j) = factor1*factor1 / (sqrt(8.0) * m_wratkj1(j,k));
-            m_phi(j,k) = m_phi(k,j)/(vratiokj * wratiojk);
+            double factor1 = 1.0 + (m_sqvisc[k] / m_sqvisc[j]) * m_wratjk(k, j);
+            m_phi(k, j) = factor1 * factor1 / (sqrt(8.0) * m_wratkj1(j, k));
+            m_phi(j, k) = m_phi(k, j) / (vratiokj * wratiojk);
         }
     }
     m_viscwt_ok = true;
@@ -254,10 +254,10 @@ void GasTransport::getMixDiffCoeffsMass(doublereal* const d)
     if (m_nsp == 1) {
         d[0] = m_bdiff(0,0) / p;
     } else {
-        for (size_t k=0; k<m_nsp; k++) {
+        for (size_t k = 0; k < m_nsp; k++) {
             double sum1 = 0.0;
             double sum2 = 0.0;
-            for (size_t i=0; i<m_nsp; i++) {
+            for (size_t i = 0; i < m_nsp; i++) {
                 if (i==k) {
                     continue;
                 }
