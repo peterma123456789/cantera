@@ -369,6 +369,7 @@ extern "C" {
     {
         try {
             IdealGasPhase& ph = ThermoCabinet::get<IdealGasPhase>(iph);
+            //ThermoPhase& ph = ThermoCabinet::get<ThermoPhase>(iph);
             if (itype == 1) {
                 AxiStagnFlow* x = new AxiStagnFlow(&ph, ph.nSpecies(), 2);
                 x->setKinetics(KineticsCabinet::item(ikin));
