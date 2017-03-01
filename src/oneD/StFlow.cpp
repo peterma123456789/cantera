@@ -13,8 +13,8 @@ using namespace std;
 namespace Cantera
 {
 
-//StFlow::StFlow(IdealGasPhase* ph, size_t nsp, size_t points) :
-StFlow::StFlow(ThermoPhase* ph, size_t nsp, size_t points) :
+StFlow::StFlow(IdealGasPhase* ph, size_t nsp, size_t points) :
+//StFlow::StFlow(ThermoPhase* ph, size_t nsp, size_t points) :
     Domain1D(nsp+c_offset_Y, points),
     m_press(-1.0),
     m_nsp(nsp),
@@ -444,24 +444,24 @@ void StFlow::eval(size_t jg, doublereal* xg,
             //      - sum_k(J_k c_p_k / M_k) dT/dz
             //-----------------------------------------------
             if (m_do_energy[j]) {
-                //setGas(x,j);
+                setGas(x,j);
 
-                //// heat release term
-                //const vector_fp& h_RT = m_thermo->enthalpy_RT_ref();
-                //const vector_fp& cp_R = m_thermo->cp_R_ref();
+                // heat release term
+                const vector_fp& h_RT = m_thermo->enthalpy_RT_ref();
+                const vector_fp& cp_R = m_thermo->cp_R_ref();
 
                 double sum = 0.0;
                 double sum2 = 0.0;
                 for (size_t k = 0; k < m_nsp; k++) {
-                    double flxk = 0.5*(m_flux(k,j-1) + m_flux(k,j));
-                    //sum += wdot(k,j)*h_RT[k];
-                    //sum2 += flxk*cp_R[k]/m_wt[k];
-                    sum += wdot(k, j) * m_hbar[j * m_nsp + k];
-                    sum2 += flxk * dhbardz(x, j, k) / m_wt[k];
+                    double flxk = 0.5 * (m_flux(k, j - 1) + m_flux(k, j));
+                    sum += wdot(k,j)*h_RT[k];
+                    sum2 += flxk*cp_R[k]/m_wt[k];
+                    //sum += wdot(k, j) * m_hbar[j * m_nsp + k];
+                    //sum2 += flxk * dhbardz(x, j, k) / m_wt[k];
                 }
-                //sum *= GasConstant * T(x,j);
+                sum *= GasConstant * T(x,j);
                 double dtdzj = dTdz(x,j);
-                //sum2 *= GasConstant * dtdzj;
+                sum2 *= GasConstant * dtdzj;
 
                 rsd[index(c_offset_T, j)] = - m_cp[j]*rho_u(x,j)*dtdzj
                                             - divHeatFlux(x,j) - sum - sum2;
@@ -953,8 +953,8 @@ void AxiStagnFlow::evalContinuity(size_t j, doublereal* x, doublereal* rsd,
     diag[index(c_offset_U, j)] = 0;
 }
 
-//FreeFlame::FreeFlame(IdealGasPhase* ph, size_t nsp, size_t points) :
-FreeFlame::FreeFlame(ThermoPhase* ph, size_t nsp, size_t points) :
+FreeFlame::FreeFlame(IdealGasPhase* ph, size_t nsp, size_t points) :
+//FreeFlame::FreeFlame(ThermoPhase* ph, size_t nsp, size_t points) :
     StFlow(ph, nsp, points),
     m_zfixed(Undef),
     m_tfixed(Undef)
