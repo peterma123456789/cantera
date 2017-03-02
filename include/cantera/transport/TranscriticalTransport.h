@@ -53,6 +53,7 @@ public:
             return viscosity_Chung_LP();
         } else if (m_mode == HP_Mode) {
             return viscosity_Chung_HP();
+            //return viscosity_Chung_HP_modified();
          } else {
             throw CanteraError("TranscriticalTransport::viscosity",
                                "Unknown mode");
@@ -73,6 +74,7 @@ public:
             return thermalConductivity_Chung_LP();
         } else if (m_mode == HP_Mode) {
             return thermalConductivity_Chung_HP();
+            //return thermalConductivity_Chung_HP_modified();
         } else {
             throw CanteraError("TranscriticalTransport::thermalConductivity",
                                "Unknown mode");
@@ -160,10 +162,12 @@ private:
     doublereal viscosity_Lucas_HP();
     doublereal viscosity_Chung_LP();
     doublereal viscosity_Chung_HP();
+    doublereal viscosity_Chung_HP_modified();
 
     doublereal thermalConductivity_ElyHanley_HP();
     doublereal thermalConductivity_Chung_LP();
     doublereal thermalConductivity_Chung_HP();
+    doublereal thermalConductivity_Chung_HP_modified();
 
     void getMultiDiffCoeffs_Takahashi(const size_t ld, doublereal* const d);
     void getMixDiffCoeffs_Takahashi(doublereal* const d);

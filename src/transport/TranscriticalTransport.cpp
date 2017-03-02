@@ -733,6 +733,101 @@ doublereal TranscriticalTransport::viscosity_Chung_HP()
     return mixViscosity;
 }
 
+doublereal TranscriticalTransport::viscosity_Chung_HP_modified()
+{
+    // coeffs for viscosity
+    const size_t nCoeff = 10;
+    static const double a1[nCoeff] = {6.324, 1.210e-3, 5.283, 6.623, 19.745, -1.900, 24.275, 0.7972, -0.2382, 0.06863};
+    static const double b1[nCoeff] = {50.412, -1.154e-3, 254.209, 38.096, 7.630, -12.537, 3.450, 1.1170, 0.0677, 0.3479};
+    static const double c1[nCoeff] = {-51.680, -6.257e-3, -168.480, -8.464, -14.354, 4.985, -11.291, 0.01235, -0.8163, 0.5926};
+    static const double d1[nCoeff] = {1189.000, 0.03728, 3898.0, 31.42, 31.53, -18.15, 69.35, -4.117, 4.025, -0.727};
+
+    // update T and C
+    update_T();
+    update_C();
+
+    // calculate pressure once for later
+    doublereal pressure = m_thermo->pressure();
+
+    doublereal mixViscosity = 0.0;
+    for (size_t k = 0; k < m_nsp; k++) {
+        doublereal visc;
+
+        if (IsCrit[k]) { // Chung'g high pressure
+
+            doublereal TStar = 1.2593 * m_temp / Tcrit[k]; // (9-4.9) in Poling
+            doublereal mu_R = 131.3 * dipole[k] / sqrt(Vcrit[k]*1e3 * Tcrit[k]); // (9-4.12) in Poling
+            doublereal Neufeld =
+                1.16145 * pow(TStar, -0.14874) +
+                0.52487 * exp(-0.7732 * TStar) +
+                2.16178 * exp(-2.43787 * TStar); // (9-4.3) in Poling
+            doublereal Fc =
+                1.0 - 0.2756 * omega[k] + 0.059035 * pow(mu_R, 4) + kappa[k]; // (9-4.11) in Poling
+
+            //printf("    TStar = %g, mu_R = %g, Newfeld = %g, Fc = %g\n", TStar, mu_R, Neufeld, Fc);
+
+            // Chung_HP part starts...
+            vector_fp E(nCoeff);
+            for (size_t i = 0; i < nCoeff; i++)
+                E[i] = a1[i] + b1[i] * omega[k] + c1[i] * pow(mu_R, 4.0) +
+                       d1[i] * kappa[k];
+
+            //printf("    ");
+            //for (size_t i = 0; i < nCoeff; i++) printf("E[i] = %f, ", E[i]);
+            //printf("\n");
+
+            // use density of pure species at current T, and P
+            vector_fp mfracs(m_nsp);
+            for (size_t l = 0; l < m_nsp; l++) {
+                if (l == k) {
+                    mfracs[l] = 1.0;
+                } else {
+                    mfracs[l] = 0.0;
+                }
+            }
+            m_thermo->setState_TPX(m_temp, pressure, &mfracs[0]);
+            doublereal rho = m_thermo->density() * m_molefracs[k];
+
+            doublereal y = rho / m_mw[k] * Vcrit[k] / 6.0;
+            //printf("    rho = %g, M = %g, Vc = %g\n", m_thermo->density(), m_mw[k], Vcrit[k]);
+
+            doublereal G1 = (1.0 - 0.5 * y) / pow((1.0 - y), 3);
+            doublereal G2 = (E[0] / y * (1.0 - exp(-E[3] * y)) +
+                             E[1] * G1 * exp(E[4] * y) + E[2] * G1) /
+                            (E[0] * E[3] + E[1] + E[2]);
+            //printf("    y = %g, G1 = %g, G2 = %g\n", y, G1, G2);
+
+            doublereal mustarstar =
+                E[6] * y * y * G2 *
+                exp(E[7] + E[8] / TStar + E[9] / pow(TStar, 2));
+            doublereal mustar =
+                pow(TStar, 0.5) / Neufeld * (Fc * (pow(G2, -1) + E[5] * y)) +
+                mustarstar;
+            //printf("    mustarstar = %g, mustar = %g\n", mustarstar, mustar);
+
+            visc = (36.644 * mustar * sqrt(m_mw[k] * Tcrit[k]) /
+                    pow(Vcrit[k]*1e3, 2.0 / 3.0)) / 10.0e6;
+
+        } else { // species viscosity
+
+            // this is copied from GasTransport::updateSpeciesViscosities()
+            doublereal sqvisc = m_t14 * dot5(m_polytempvec, m_visccoeffs[k]);
+            visc = sqvisc * sqvisc;
+        }
+
+        // mole-fraction averaged
+        mixViscosity += m_molefracs[k] * visc;
+
+        //printf("k = %d, visc = %g, x = %g, mixViscosity = %g\n", k, visc, m_molefracs[k], mixViscosity);
+    }
+
+    // restore m_thermo
+    m_thermo->setState_TPX(m_temp, pressure, &m_molefracs[0]);
+
+    // return the viscosity
+    return mixViscosity;
+}
+
 // Thermal conductivity models
 doublereal TranscriticalTransport::thermalConductivity_ElyHanley_HP()
 {
@@ -1001,6 +1096,111 @@ doublereal TranscriticalTransport::thermalConductivity_Chung_HP()
     //doublereal mixConductivity_ig = 3.75 * mu * psi * GasConstant / MW_M;
     doublereal mixConductivity = 31.2 * mu * psi / (MW_M / 1000) * (1.0 / G2 + B_coef[5] * y) + q * B_coef[6] * pow(y, 2) * sqrt(T_in / TCrit_M) * G2;
 
+    return mixConductivity;
+}
+
+doublereal TranscriticalTransport::thermalConductivity_Chung_HP_modified()
+{
+    // coeffs
+    const size_t nCoeff = 7;
+    static const double a1[nCoeff] = {2.4166, -0.50924, 6.6107, 14.543, 0.79274, -5.8634, 91.089};
+    static const double b1[nCoeff] = {0.74824, -1.5094, 5.6207, -8.9139, 0.82019, 12.801, 128.11};
+    static const double c1[nCoeff] = {-0.91858, -49.991, 64.760, -5.6379, -0.69369, 9.5893, -54.217};
+    static const double d1[nCoeff] = {121.72, 69.983, 27.039, 74.344, 6.3173, 65.529, 523.81};
+
+    // update T and C
+    update_T();
+    update_C();
+
+    // calculate pressure once for later
+    doublereal pressure = m_thermo->pressure();
+
+    doublereal mixConductivity = 0.0;
+    for (size_t k = 0; k < m_nsp; k++) {
+        doublereal cond;
+
+        if (IsCrit[k]) { // Chung'g high pressure
+
+            doublereal TStar = 1.2593 * m_temp / Tcrit[k]; // (9-4.9) in Poling
+            doublereal mu_R = 131.3 * dipole[k] /
+                              sqrt(Vcrit[k]*1e3 * Tcrit[k]); // (9-4.12) in Poling
+            doublereal Neufeld =
+                1.16145 * pow(TStar, -0.14874) +
+                0.52487 * exp(-0.7732 * TStar) +
+                2.16178 * exp(-2.43787 * TStar); // (9-4.3) in Poling
+            doublereal Fc = 1.0 - 0.2756 * omega[k] + 0.059035 * pow(mu_R, 4) +
+                            kappa[k]; // (9-4.11) in Poling
+
+            // above is repeated as in viscosity_Chung_LP
+
+            doublereal mu = 40.785 * Fc * sqrt(m_mw[k] * m_temp) /
+                            (Neufeld * pow(Vcrit[k]*1e3, 2.0 / 3.0)) / 10.0e6;
+
+            // Chung's conductivity model is used
+            vector_fp B_coef(nCoeff);
+            for (size_t i = 0; i < nCoeff; i++)
+                B_coef[i] = a1[i] + b1[i] * omega[k] + c1[i] * pow(mu_R, 4.0) +
+                            d1[i] * kappa[k];
+
+            // use density of pure species at current T, and P
+            vector_fp mfracs(m_nsp);
+            for (size_t l = 0; l < m_nsp; l++) {
+                if (l == k) {
+                    mfracs[l] = 1.0;
+                } else {
+                    mfracs[l] = 0.0;
+                }
+            }
+            m_thermo->setState_TPX(m_temp, pressure, &mfracs[0]);
+            doublereal rho = m_thermo->density() * m_molefracs[k];
+
+            doublereal y = rho / m_mw[k] * Vcrit[k] / 6.0;
+            // jph the units of density are strange density is mol/cm^3. In
+            // poling it is cm^3/mol but I think from Chung 1988 they are
+            // typical kg/m^3
+
+            doublereal G1 = (1.0 - 0.5 * y) / pow((1.0 - y), 3);
+            doublereal G2 =
+                ((B_coef[0] / y) * (1.0 - exp(-B_coef[3] * y)) +
+                 B_coef[1] * G1 * exp(B_coef[4] * y) + B_coef[2] * G1) /
+                (B_coef[0] * B_coef[3] + B_coef[1] + B_coef[2]);
+
+            vector_fp cp_r_ref(m_nsp);
+            m_thermo->getCp_R_ref(&cp_r_ref[0]);
+            doublereal cp_ig =
+                std::inner_product(m_molefracs.begin(), m_molefracs.end(),
+                                   cp_r_ref.begin(), 0.0) *
+                GasConstant;
+            doublereal cv_ig = cp_ig - GasConstant; // Cv of the ideal gas
+
+            doublereal alpha = cv_ig / GasConstant - 3.0 / 2.0;
+            doublereal beta =
+                0.7862 - 0.7109 * omega[k] + 1.3168 * pow(omega[k], 2);
+            doublereal Zr = 2.0 + 10.5 * pow(m_temp / Tcrit[k], 2);
+            doublereal q = 0.003586 * sqrt(Tcrit[k] / (m_mw[k] / 1000.0)) /
+                           pow(Vcrit[k]*1e3, 2.0 / 3.0);
+            doublereal psi = 1.0 + alpha *
+                    ((0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * Zr) /
+                     (0.6366 + beta * Zr + 1.061 * alpha * beta));
+
+            cond = 31.2 * mu * psi / (m_mw[k] / 1000) *
+                       (1.0 / G2 + B_coef[5] * y) +
+                   q * B_coef[6] * pow(y, 2) * sqrt(m_temp / Tcrit[k]) * G2;
+
+        } else { // species viscosity
+
+            // this is copied from MixTransport::updateCond_T()
+            cond = m_sqrt_t * dot5(m_polytempvec, m_condcoeffs[k]);
+        }
+
+        // mole-fraction averaged
+        mixConductivity += m_molefracs[k] * cond;
+    }
+
+    // restore m_thermo
+    m_thermo->setState_TPX(m_temp, pressure, &m_molefracs[0]);
+
+    // return the conductivity
     return mixConductivity;
 }
 
