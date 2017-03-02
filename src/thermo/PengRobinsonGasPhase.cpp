@@ -366,6 +366,36 @@ void PengRobinsonGasPhase::getStandardVolumes_ref(doublereal* vol) const
     }
 }
 
+void PengRobinsonGasPhase::setToEquilState(const doublereal* mu_RT)
+{
+    const vector_fp& grt = gibbs_RT_ref();
+
+    /*
+     * Within the method, we protect against inf results if the
+     * exponent is too high.
+     *
+     * If it is too low, we set
+     * the partial pressure to zero. This capability is needed
+     * by the elemental potential method.
+     */
+    doublereal pres = 0.0;
+    for (size_t k = 0; k < m_kk; k++) {
+        double tmp = -grt[k] + mu_RT[k];
+        if (tmp < -600.) {
+            m_pp[k] = 0.0;
+        } else if (tmp > 300.0) {
+            double tmp2 = tmp / 300.;
+            tmp2 *= tmp2;
+            m_pp[k] = m_p0 * exp(300.) * tmp2;
+        } else {
+            m_pp[k] = m_p0 * exp(tmp);
+        }
+        pres += m_pp[k];
+    }
+    // set state
+    setState_PX(pres, &m_pp[0]);
+}
+
 void PengRobinsonGasPhase::initThermo()
 {
     ThermoPhase::initThermo();
@@ -675,36 +705,6 @@ doublereal PengRobinsonGasPhase::GetCubicRoots(doublereal a0, doublereal a1, dou
     // double sanity = pow(Z,3)+pow(Z,2)*a2+Z*a1+a0;
     //  printf("Sanity = %e\n ", sanity);
     return Z;
-}
-
-void PengRobinsonGasPhase::setToEquilState(const doublereal* mu_RT)
-{
-    const vector_fp& grt = gibbs_RT_ref();
-
-    /*
-     * Within the method, we protect against inf results if the
-     * exponent is too high.
-     *
-     * If it is too low, we set
-     * the partial pressure to zero. This capability is needed
-     * by the elemental potential method.
-     */
-    doublereal pres = 0.0;
-    for (size_t k = 0; k < m_kk; k++) {
-        double tmp = -grt[k] + mu_RT[k];
-        if (tmp < -600.) {
-            m_pp[k] = 0.0;
-        } else if (tmp > 300.0) {
-            double tmp2 = tmp / 300.;
-            tmp2 *= tmp2;
-            m_pp[k] = m_p0 * exp(300.) * tmp2;
-        } else {
-            m_pp[k] = m_p0 * exp(tmp);
-        }
-        pres += m_pp[k];
-    }
-    // set state
-    setState_PX(pres, &m_pp[0]);
 }
 
 doublereal PengRobinsonGasPhase::critTemperature() const

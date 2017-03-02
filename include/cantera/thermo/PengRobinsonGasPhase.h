@@ -302,9 +302,7 @@ namespace Cantera
  */
 class PengRobinsonGasPhase: public ThermoPhase
 {
-
-  public:
-
+public:
     //! Default empty Constructor
     PengRobinsonGasPhase();
 
@@ -853,34 +851,6 @@ class PengRobinsonGasPhase: public ThermoPhase
 
     //@}
 
-    //! Initialize the ThermoPhase object after all species have been set up
-    /*!
-     * @internal Initialize.
-     *
-     * This method performs any initialization required after all
-     * species have been added. For example, it is used to
-     * resize internal work arrays that must have an entry for
-     * each species.
-     * This method is called from ThermoPhase::initThermoXML(),
-     * which is called from importPhase(),
-     * just prior to returning from the function, importPhase().
-     */
-    virtual void initThermo();
-
-    //! read in critical properties, called inside initThermo()
-    void ReadCriticalProperties() const;
-
-    //! set constants for the real fluids eos
-    void SetRealFluidConstants() const;
-
-    //! set Am in eos which is temperature dependent
-    //void SetAm() const;
-    void SetRealFluidThermodynamics() const;
-
-    doublereal GetVolumeFromPressureTemperature(doublereal p_in, doublereal T_in) const;
-
-    doublereal GetCubicRoots(doublereal a0, doublereal a1, doublereal a2) const;
-
     //! Method used by the ChemEquil equilibrium solver.
     /*!
      * @internal
@@ -898,6 +868,39 @@ class PengRobinsonGasPhase: public ThermoPhase
      *                  \f[ \lambda_m/RT \f].
      */
     virtual void setToEquilState(const doublereal* lambda_RT);
+
+    //! Initialize the ThermoPhase object after all species have been set up
+    /*!
+     * @internal Initialize.
+     *
+     * This method performs any initialization required after all
+     * species have been added. For example, it is used to
+     * resize internal work arrays that must have an entry for
+     * each species.
+     * This method is called from ThermoPhase::initThermoXML(),
+     * which is called from importPhase(),
+     * just prior to returning from the function, importPhase().
+     */
+    virtual void initThermo();
+
+    //@}
+    /// @name Real fluid stuff
+    //@{
+
+    //! read in critical properties, called inside initThermo()
+    void ReadCriticalProperties() const;
+
+    //! set constants for the real fluids eos
+    void SetRealFluidConstants() const;
+
+    //! set Am in eos which is temperature dependent
+    //void SetAm() const;
+    void SetRealFluidThermodynamics() const;
+
+    doublereal GetVolumeFromPressureTemperature(doublereal p_in,
+                                                doublereal T_in) const;
+
+    doublereal GetCubicRoots(doublereal a0, doublereal a1, doublereal a2) const;
 
     // critical properties of the mixture
     // just used by the transport class using Lucas_HP method
@@ -931,8 +934,7 @@ class PengRobinsonGasPhase: public ThermoPhase
     /// Dipole Moment (Debye)
     virtual void getDipoleMoment(doublereal* const di) const;
 
-  protected:
-
+protected:
     //! Reference state pressure
     /*!
      *  Value of the reference state pressure in Pascals.
@@ -997,8 +999,7 @@ class PengRobinsonGasPhase: public ThermoPhase
     mutable vector_fp d2AmdTdN;
     mutable vector_fp dK1dN;
 
-  private:
-
+private:
     //! Update the species reference state thermodynamic functions
     /*!
      *  This method is called each time a thermodynamic property is requested,
@@ -1013,8 +1014,8 @@ class PengRobinsonGasPhase: public ThermoPhase
      */
     void _updateThermo() const;
 
+    //! Update the species reference state thermodynamic functions
     void _updateThermoRealFluid() const;
-
 };
 
 }
