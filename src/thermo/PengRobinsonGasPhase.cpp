@@ -456,7 +456,7 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             sigma[k] = 0.0;
             dipole[k] = 0.0;
         } else if (speciesName(k) == "N2") {
-            IsCrit[k] = 0;
+            IsCrit[k] = 1;
             Tcrit[k] = 126.19; // K
             Pcrit[k] = 3.3958e+6; // Pa
             Vcrit[k] = 89.41e-3; // m3/kmol

@@ -122,7 +122,7 @@ public:
 
 protected:
 
-    void ReadCriticalProperties() const;
+    virtual void ReadCriticalProperties();
 
     //virtual doublereal Tcrit_i(size_t i);
 
@@ -141,18 +141,19 @@ protected:
     virtual doublereal setPcorr(doublereal Pr, doublereal Tr);
 
     // critical properties
-    mutable vector_fp Tcrit;
-    mutable vector_fp Pcrit;
-    mutable vector_fp Vcrit;
-    mutable vector_fp Zcrit;
-    mutable vector_fp omega;
-    mutable vector_fp dipole;
-    mutable vector_fp kappa;
-    mutable vector_fp sigma_IJ;
-    mutable vector_fp epsOverk_IJ;
-    mutable vector_fp omega_IJ;
-    mutable vector_fp MW_IJ;
-    mutable vector_fp kappa_IJ;
+    vector_int IsCrit;
+    vector_fp Tcrit;
+    vector_fp Pcrit;
+    vector_fp Vcrit;
+    vector_fp Zcrit;
+    vector_fp omega;
+    vector_fp dipole;
+    vector_fp kappa;
+    vector_fp sigma_IJ;
+    vector_fp epsOverk_IJ;
+    vector_fp omega_IJ;
+    vector_fp MW_IJ;
+    vector_fp kappa_IJ;
 
 private:
 

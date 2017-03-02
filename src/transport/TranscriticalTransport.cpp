@@ -24,24 +24,6 @@ using namespace std;
 namespace Cantera
 {
 
-///////////////////// helper functions /////////////////////////
-
-/**
- *  The Parker temperature correction to the rotational collision number.
- *
- *  @param tr Reduced temperature \f$ \epsilon/kT \f$
- *  @param sqtr square root of tr.
- */
-inline doublereal Frot(doublereal tr, doublereal sqtr)
-{
-    const doublereal c1 = 0.5*sqrt(Pi)*Pi;
-    const doublereal c2 = 0.25*Pi*Pi + 2.0;
-    const doublereal c3 = sqrt(Pi)*Pi;
-    return 1.0 + c1*sqtr + c2*tr + c3*sqtr*tr;
-}
-
-//////////////////// class TranscriticalTransport methods //////////////
-
 TranscriticalTransport::TranscriticalTransport(thermo_t* thermo)
     : MultiTransport(thermo)
 {
@@ -54,6 +36,7 @@ void TranscriticalTransport::init(ThermoPhase* thermo, int mode, int log_level)
     // get critical properties from thermo object
     // this is quick hack
     // ideally should use GasTranportData object to set omega and dipole
+    IsCrit.resize(m_nsp);
     Tcrit.resize(m_nsp);
     Pcrit.resize(m_nsp);
     Vcrit.resize(m_nsp);
@@ -71,7 +54,7 @@ void TranscriticalTransport::init(ThermoPhase* thermo, int mode, int log_level)
     ReadCriticalProperties();
 
     // hard-coded, otherwise have issues with Chung_HP viscosity
-    for (size_t k = 0; k < m_nsp; k++)
+    //for (size_t k = 0; k < m_nsp; k++)
         //if (m_thermo->speciesName(k) == "H2")
             //omega[k] = 0.0;
 
@@ -93,14 +76,12 @@ void TranscriticalTransport::init(ThermoPhase* thermo, int mode, int log_level)
     }
 }
 
-void TranscriticalTransport::ReadCriticalProperties() const
+void TranscriticalTransport::ReadCriticalProperties()
 {
     //! \brief Reads critical properties based on JP's papaer
     for (size_t k = 0; k < m_nsp; k++) {
         if (m_thermo->speciesName(k) == "H2") {
-            //Tcrit[k] = 33.0; // K
-            //Pcrit[k] = 1.284e+6; // Pa
-            //Vcrit[k] = 64.28e-3; // m3/kmol
+            IsCrit[k] = 1;
             Tcrit[k] = 33.145; // K
             Pcrit[k] = 1.2964e+6; // Pa
             Vcrit[k] = 64.4834e-3; // m3/kmol
@@ -109,6 +90,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "O2") {
+            IsCrit[k] = 1;
             Tcrit[k] = 154.5800; // K
             Pcrit[k] = 5.0430e+6; // Pa
             Vcrit[k] = 73.37e-3; // m3/kmol
@@ -117,6 +99,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "H2O") {
+            IsCrit[k] = 1;
             Tcrit[k] = 647.10; // K
             Pcrit[k] = 22.064e+6; // Pa
             Vcrit[k] = 55.95e-3; // m3/kmol
@@ -125,6 +108,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 1.855;
             kappa[k] = 0.076; // modified from Chung's value
         } else if (m_thermo->speciesName(k) == "O") {
+            IsCrit[k] = 0;
             Tcrit[k] = 105.28; // K
             Pcrit[k] = 7.088e+6; // Pa
             Vcrit[k] = 41.21e-3; // m3/kmol
@@ -133,6 +117,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "H") {
+            IsCrit[k] = 0;
             Tcrit[k] = 190.82; // K
             Pcrit[k] = 31.013e+6; // Pa
             Vcrit[k] = 17.07e-3; // m3/kmol
@@ -141,6 +126,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "OH") {
+            IsCrit[k] = 0;
             Tcrit[k] = 105.28; // K
             Pcrit[k] = 7.088e+6; // Pa
             Vcrit[k] = 41.21e-3; // m3/kmol
@@ -149,6 +135,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "H2O2") {
+            IsCrit[k] = 0;
             Tcrit[k] = 141.34; // K
             Pcrit[k] = 4.786e+6; // Pa
             Vcrit[k] = 81.93e-3; // m3/kmol
@@ -157,6 +144,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "HO2") {
+            IsCrit[k] = 0;
             Tcrit[k] = 141.34; // K
             Pcrit[k] = 4.786e+6; // Pa
             Vcrit[k] = 81.93e-3; // m3/kmol
@@ -165,6 +153,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             dipole[k] = 0.0;
             kappa[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "N2") {
+            IsCrit[k] = 1;
             Tcrit[k] = 126.19; // K
             Pcrit[k] = 3.3958e+6; // Pa
             Vcrit[k] = 89.41e-3; // m3/kmol
@@ -172,6 +161,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             omega[k] = 0.0372;
             dipole[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "AR") {
+            IsCrit[k] = 1;
             Tcrit[k] = 150.687; // K
             Pcrit[k] = 4.8630e+6; // Pa
             Vcrit[k] = 74.59e-3; // m3/kmol
@@ -179,6 +169,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             omega[k] = 0.0;
             dipole[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "KR") {
+            IsCrit[k] = 1;
             Tcrit[k] = 209.48; // K
             Pcrit[k] = 5.5250e+6; // Pa
             Vcrit[k] = 92.17e-3; // m3/kmol
@@ -186,6 +177,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
             omega[k] = 0.0;
             dipole[k] = 0.0;
         } else if (m_thermo->speciesName(k) == "NE") {
+            IsCrit[k] = 1;
             Tcrit[k] = 44.4918; // K
             Pcrit[k] = 2.6786e+6; // Pa
             Vcrit[k] = 41.87e-3; // m3/kmol
@@ -193,7 +185,14 @@ void TranscriticalTransport::ReadCriticalProperties() const
             omega[k] = 0.0;
             dipole[k] = 0.0;
         } else {
-            cout << " WARNING -> Unknown species : " << m_thermo->speciesName(k) << ". No critical properties found." << endl;
+            cout << " WARNING -> Unknown species : " << m_thermo->speciesName(k) << ". All critical properties set to zero." << endl;
+            IsCrit[k] = 0;
+            Tcrit[k] = 0.0; // K
+            Pcrit[k] = 0.0; // Pa
+            Vcrit[k] = 0.0; // m3/kmol
+            Zcrit[k] = 0.0;
+            omega[k] = 0.0;
+            dipole[k] = 0.0;
         }
     }
 }
