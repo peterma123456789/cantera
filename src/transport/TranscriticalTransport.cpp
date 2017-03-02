@@ -310,70 +310,7 @@ void TranscriticalTransport::ReadCriticalProperties() const
 
 void TranscriticalTransport::updateThermal_T()
 {
-    if (m_thermal_tlast == m_thermo->temperature()) {
-        return;
-    }
-
-    // we need species viscosities and binary diffusion coefficients
-    updateSpeciesViscosities();
-    updateDiff_T();
-
-    // evaluate polynomial fits for A*, B*, C*
-    doublereal z;
-    int ipoly;
-    for (size_t i = 0; i < m_nsp; i++) {
-        for (size_t j = i; j < m_nsp; j++) {
-            z = m_logt - m_log_eps_k(i,j);
-            ipoly = m_poly[i][j];
-            if (m_mode == CK_Mode) {
-                m_om22(i,j) = poly6(z, DATA_PTR(m_omega22_poly[ipoly]));
-                m_astar(i,j) = poly6(z, DATA_PTR(m_astar_poly[ipoly]));
-                m_bstar(i,j) = poly6(z, DATA_PTR(m_bstar_poly[ipoly]));
-                m_cstar(i,j) = poly6(z, DATA_PTR(m_cstar_poly[ipoly]));
-            } else {
-                m_om22(i,j) = poly8(z, DATA_PTR(m_omega22_poly[ipoly]));
-                m_astar(i,j) = poly8(z, DATA_PTR(m_astar_poly[ipoly]));
-                m_bstar(i,j) = poly8(z, DATA_PTR(m_bstar_poly[ipoly]));
-                m_cstar(i,j) = poly8(z, DATA_PTR(m_cstar_poly[ipoly]));
-            }
-            m_om22(j,i)  = m_om22(i,j);
-            m_astar(j,i) = m_astar(i,j);
-            m_bstar(j,i) = m_bstar(i,j);
-            m_cstar(j,i) = m_cstar(i,j);
-        }
-    }
-    m_abc_ok = true;
-
-    // evaluate the temperature-dependent rotational relaxation rate
-    doublereal tr, sqtr;
-    for (size_t k = 0; k < m_nsp; k++) {
-        tr = m_eps[k]/ m_kbt;
-        sqtr = m_sqrt_eps_k[k] / m_sqrt_t;
-        m_rotrelax[k] = std::max(1.0,m_zrot[k]) * m_frot_298[k]/Frot(tr, sqtr);
-    }
-
-    doublereal d;
-    doublereal c = 1.2 * GasConstant * m_temp;
-    for (size_t k = 0; k < m_nsp; k++) {
-        d = c * m_visc[k] * m_astar(k, k) / m_mw[k];
-        m_bdiff(k, k) = d;
-    }
-
-    // Calculate the internal heat capacities by subtracting off the translational contributions
-    /*
-     *  HKM Exploratory comment:
-     *       The translational component is 1.5
-     *       The rotational component is 1.0 for a linear molecule and 1.5 for a nonlinear molecule
-     *           and zero for a monatomic.
-     *       Chemkin has traditionally subtracted 1.5 here (SAND86-8246).
-     *       The original Dixon-Lewis paper subtracted 1.5 here.
-     */
-    vector_fp cp(m_thermo->nSpecies());
-    m_thermo->getCp_R_ref(&cp[0]);
-
-    for (size_t k = 0; k < m_nsp; k++) {
-        m_cinternal[k] = cp[k] - 2.5;
-    }
+    MultiTransport::updateThermal_T();
 
     // Correct the binary diffusion coefficients for high-pressure effects
     doublereal P_corr_ij, Tr_ij, Pr_ij;
@@ -402,12 +339,12 @@ void TranscriticalTransport::updateThermal_T()
 
                 if (P_corr_ij > 1.07) printf("%s, %s, Pr = %g, Tr = %g, P_corr = %g\n", m_thermo->speciesName(i).c_str(), m_thermo->speciesName(j).c_str(), Pr_ij, Tr_ij, P_corr_ij);
 
+                // we limit the correction, b/c otherwise have numerical issues
+                // for flamelet calculations
                 m_bdiff(i, j) *= max(P_corr_ij, 0.4);
             }
         }
     }
-
-    m_thermal_tlast = m_thermo->temperature();
 }
 
 //void TranscriticalTransport::getMultiDiffCoeffs_Takahashi(const size_t ld, doublereal* const d)
