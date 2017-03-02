@@ -26,15 +26,12 @@ namespace Cantera
  */
 class TranscriticalTransport : public MultiTransport
 {
-  protected:
-
+public:
     //! default constructor
     /*!
      *   @param thermo  Optional parameter for the pointer to the ThermoPhase object
      */
     TranscriticalTransport(thermo_t* thermo=0);
-
-  public:
 
     virtual int model() const
     {
@@ -91,43 +88,41 @@ class TranscriticalTransport : public MultiTransport
      */
     //virtual void getBinaryDiffCoeffs(const size_t ld, doublereal* const d);
 
-    virtual void getMultiDiffCoeffs(const size_t ld, doublereal* const d)
-    {
-        //MultiTransport::getMultiDiffCoeffs(ld, d);
-        if (m_mode == LP_Mode) {
-            MultiTransport::getMultiDiffCoeffs(ld, d);
-        } else if (m_mode == HP_Mode) {
-            MultiTransport::getMultiDiffCoeffs(ld, d);
-            //getMultiDiffCoeffs_Takahashi(ld, d);
-        } else {
-            throw CanteraError("TranscriticalTransport::getMultiDiffCoeffs",
-                               "Unknown mode");
-        }
-    }
+//    virtual void getMultiDiffCoeffs(const size_t ld, doublereal* const d)
+//    {
+//        //MultiTransport::getMultiDiffCoeffs(ld, d);
+//        if (m_mode == LP_Mode) {
+//            MultiTransport::getMultiDiffCoeffs(ld, d);
+//        } else if (m_mode == HP_Mode) {
+//            MultiTransport::getMultiDiffCoeffs(ld, d);
+//            //getMultiDiffCoeffs_Takahashi(ld, d);
+//        } else {
+//            throw CanteraError("TranscriticalTransport::getMultiDiffCoeffs",
+//                               "Unknown mode");
+//        }
+//    }
 
-    virtual void getMixDiffCoeffs(doublereal* const d)
-    {
-        if (m_mode == LP_Mode) {
-            MultiTransport::getMixDiffCoeffs(d);
-        } else if (m_mode == HP_Mode) {
-            getMixDiffCoeffs_Takahashi(d);
-        } else {
-            throw CanteraError("TranscriticalTransport::getMultiDiffCoeffs",
-                               "Unknown mode");
-        }
-    }
+//    virtual void getMixDiffCoeffs(doublereal* const d)
+//    {
+//        if (m_mode == LP_Mode) {
+//            MultiTransport::getMixDiffCoeffs(d);
+//        } else if (m_mode == HP_Mode) {
+//            getMixDiffCoeffs_Takahashi(d);
+//        } else {
+//            throw CanteraError("TranscriticalTransport::getMultiDiffCoeffs",
+//                               "Unknown mode");
+//        }
+//    }
 
 //    virtual void updateDiff_T();
 
     virtual void updateThermal_T();
 
-    friend class TransportFactory;
-
     virtual void init(ThermoPhase* thermo, int mode = 0, int log_level = 0);
 
-    void ReadCriticalProperties() const;
+protected:
 
-  protected:
+    void ReadCriticalProperties() const;
 
     //virtual doublereal Tcrit_i(size_t i);
 
@@ -159,7 +154,7 @@ class TranscriticalTransport : public MultiTransport
     mutable vector_fp MW_IJ;
     mutable vector_fp kappa_IJ;
 
-  private:
+private:
 
     doublereal viscosity_Lucas_HP();
     doublereal viscosity_Chung_LP();

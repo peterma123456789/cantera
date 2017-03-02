@@ -482,76 +482,76 @@ void TranscriticalTransport::updateThermal_T()
 //    }
 //}
 
-void TranscriticalTransport::getMixDiffCoeffs_Takahashi(doublereal* const d)
-{
-    update_T();
-    update_C();
-
-    // update the binary diffusion coefficients if necessary
-    if (!m_bindiff_ok) {
-        updateDiff_T();
-    }
-
-    // Correct the binary diffusion coefficients for high-pressure effects
-    doublereal P_corr_ij, Tr_ij, Pr_ij;
-    for (size_t i = 0; i < m_nsp; i++) {
-        for (size_t j = 0; j < m_nsp; j++) {
-            if (j != i) {
-                // Add an offset to avoid a condition where x_i and x_j both equal
-                //   zero (this would lead to Pr_ij = Inf):
-                doublereal x_i_mix = std::max(Tiny, m_molefracs[i]);
-                doublereal x_j_mix = std::max(Tiny, m_molefracs[j]);
-
-                doublereal x_i = x_i_mix / (x_i_mix + x_j_mix);
-                doublereal x_j = x_j_mix / (x_i_mix + x_j_mix);
-
-                Tr_ij = m_temp / (x_i * Tcrit[i] + x_j * Tcrit[j]);
-                Pr_ij = m_thermo->pressure() / (x_i * Pcrit[i] + x_j * Pcrit[j]);
-
-                if (Pr_ij < 0.1) {
-                    P_corr_ij = 1;
-                } else {
-                    P_corr_ij = setPcorr(Pr_ij, Tr_ij);
-                    //if (P_corr_ij < 0) {
-                    //    P_corr_ij = Tiny;
-                    //}
-                }
-
-                if (P_corr_ij > 1.07) printf("%s, %s, Pr = %g, Tr = %g, P_corr = %g\n", m_thermo->speciesName(i).c_str(), m_thermo->speciesName(j).c_str(), Pr_ij, Tr_ij, P_corr_ij);
-
-                m_bdiff(i, j) *= max(P_corr_ij, 0.4);
-            }
-        }
-    }
-    m_bindiff_ok = false;  // m_bdiff is overwritten by the above routine.
-
-    // Having corrected m_bdiff for pressure and concentration effects, the
-    // routine now procedes the same as in the low-pressure case:
-
-    doublereal mmw = m_thermo->meanMolecularWeight();
-    doublereal sumxw = 0.0;
-    doublereal p = m_thermo->pressure();
-    if (m_nsp == 1) {
-        d[0] = m_bdiff(0,0) / p;
-    } else {
-        for (size_t k = 0; k < m_nsp; k++) {
-            sumxw += m_molefracs[k] * m_mw[k];
-        }
-        for (size_t k = 0; k < m_nsp; k++) {
-            double sum2 = 0.0;
-            for (size_t j = 0; j < m_nsp; j++) {
-                if (j != k) {
-                    sum2 += m_molefracs[j] / m_bdiff(j,k);
-                }
-            }
-            if (sum2 <= 0.0) {
-                d[k] = m_bdiff(k,k) / p;
-            } else {
-                d[k] = (sumxw - m_molefracs[k] * m_mw[k])/(p * mmw * sum2);
-            }
-        }
-    }
-}
+//void TranscriticalTransport::getMixDiffCoeffs_Takahashi(doublereal* const d)
+//{
+//    update_T();
+//    update_C();
+//
+//    // update the binary diffusion coefficients if necessary
+//    if (!m_bindiff_ok) {
+//        updateDiff_T();
+//    }
+//
+//    // Correct the binary diffusion coefficients for high-pressure effects
+//    doublereal P_corr_ij, Tr_ij, Pr_ij;
+//    for (size_t i = 0; i < m_nsp; i++) {
+//        for (size_t j = 0; j < m_nsp; j++) {
+//            if (j != i) {
+//                // Add an offset to avoid a condition where x_i and x_j both equal
+//                //   zero (this would lead to Pr_ij = Inf):
+//                doublereal x_i_mix = std::max(Tiny, m_molefracs[i]);
+//                doublereal x_j_mix = std::max(Tiny, m_molefracs[j]);
+//
+//                doublereal x_i = x_i_mix / (x_i_mix + x_j_mix);
+//                doublereal x_j = x_j_mix / (x_i_mix + x_j_mix);
+//
+//                Tr_ij = m_temp / (x_i * Tcrit[i] + x_j * Tcrit[j]);
+//                Pr_ij = m_thermo->pressure() / (x_i * Pcrit[i] + x_j * Pcrit[j]);
+//
+//                if (Pr_ij < 0.1) {
+//                    P_corr_ij = 1;
+//                } else {
+//                    P_corr_ij = setPcorr(Pr_ij, Tr_ij);
+//                    //if (P_corr_ij < 0) {
+//                    //    P_corr_ij = Tiny;
+//                    //}
+//                }
+//
+//                if (P_corr_ij > 1.07) printf("%s, %s, Pr = %g, Tr = %g, P_corr = %g\n", m_thermo->speciesName(i).c_str(), m_thermo->speciesName(j).c_str(), Pr_ij, Tr_ij, P_corr_ij);
+//
+//                m_bdiff(i, j) *= max(P_corr_ij, 0.4);
+//            }
+//        }
+//    }
+//    m_bindiff_ok = false;  // m_bdiff is overwritten by the above routine.
+//
+//    // Having corrected m_bdiff for pressure and concentration effects, the
+//    // routine now procedes the same as in the low-pressure case:
+//
+//    doublereal mmw = m_thermo->meanMolecularWeight();
+//    doublereal sumxw = 0.0;
+//    doublereal p = m_thermo->pressure();
+//    if (m_nsp == 1) {
+//        d[0] = m_bdiff(0,0) / p;
+//    } else {
+//        for (size_t k = 0; k < m_nsp; k++) {
+//            sumxw += m_molefracs[k] * m_mw[k];
+//        }
+//        for (size_t k = 0; k < m_nsp; k++) {
+//            double sum2 = 0.0;
+//            for (size_t j = 0; j < m_nsp; j++) {
+//                if (j != k) {
+//                    sum2 += m_molefracs[j] / m_bdiff(j,k);
+//                }
+//            }
+//            if (sum2 <= 0.0) {
+//                d[k] = m_bdiff(k,k) / p;
+//            } else {
+//                d[k] = (sumxw - m_molefracs[k] * m_mw[k])/(p * mmw * sum2);
+//            }
+//        }
+//    }
+//}
 
 // Viscosity models
 doublereal TranscriticalTransport::viscosity_Lucas_HP()
