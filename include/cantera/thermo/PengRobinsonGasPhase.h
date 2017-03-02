@@ -963,6 +963,7 @@ protected:
     mutable vector_fp m_pp;
 
     // critical properties
+    mutable vector_int IsCrit;
     mutable vector_fp Tcrit;
     mutable vector_fp Pcrit;
     mutable vector_fp rhocrit;
