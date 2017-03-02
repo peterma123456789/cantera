@@ -199,12 +199,12 @@ void PengRobinsonGasPhase::getPartialMolarEnthalpies(doublereal* hbar) const
     _updateThermoRealFluid();
     const vector_fp& _h = enthalpy_RT_ref();
     doublereal rt = GasConstant * temperature();
-    vector_fp hbar0(m_kk);
-    scale(_h.begin(), _h.end(), &hbar0[0], rt);
+    scale(_h.begin(), _h.end(), &hbar[0], rt);
     doublereal temp = Am - temperature() * dAmdT;
     for (size_t k = 0; k < m_kk; k++) {
         if (IsCrit[k] == 0) continue;
-        hbar[k] = hbar0[k] - rt + dK1dN[k] * temp +
+
+        hbar[k] += -rt + dK1dN[k] * temp +
                   K1 * (dAmdN[k] - temperature() * d2AmdTdN[k]) +
                   pressure() * dVdN[k];
         //hbar[k] = hbar0[k];
