@@ -514,7 +514,10 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
 {
     //! \brief Assign arrays of critical point data
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
         for (size_t l = 0; l < m_kk; l++) {
+            if (IsCrit[l] == 0) continue;
+
             int apos = k * m_kk + l;
 
             // binary interation parameter
@@ -531,6 +534,8 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
 
     //! \brief Assign constants used for computing real fluid effects
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         cst_b[k] = 0.077796 * GasConstant * Tcrit[k] / Pcrit[k];
         for (size_t l = 0; l < m_kk; l++) {
             int apos = k * m_kk + l;
@@ -542,6 +547,8 @@ void PengRobinsonGasPhase::SetRealFluidConstants() const
     // compute Bm
     Bm = 0.0;
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         Bm += moleFraction(k) * cst_b[k];
     }
 }
@@ -554,9 +561,13 @@ void PengRobinsonGasPhase::SetRealFluidThermodynamics() const
     d2AmdT2 = 0.0;
     double temp = molarVolume() * molarVolume() + 2.0 * Bm * molarVolume() - Bm * Bm;
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         dAmdN[k] = 0.0;
         d2AmdTdN[k] = 0.0;
         for (size_t l = 0; l < m_kk; l++) {
+            if (IsCrit[l] == 0) continue;
+
             int apos = k * m_kk + l;
 
             double X_X = moleFraction(l) * moleFraction(k);
@@ -583,6 +594,8 @@ void PengRobinsonGasPhase::SetRealFluidThermodynamics() const
     K1 = 1.0 / (sqrt(8.0) * Bm) * log((molarVolume() + (1 - sqrt(2.0)) * Bm) / (molarVolume() + (1 + sqrt(2.0)) * Bm));
 
     for (size_t k = 0; k < m_kk; k++) {
+        if (IsCrit[k] == 0) continue;
+
         dPdN[k] = GasConstant * temperature() / (molarVolume() - Bm) + GasConstant * temperature() * cst_b[k] / pow((molarVolume() - Bm), 2)
             - dAmdN[k] / temp + 2.0 * Am * cst_b[k] * (molarVolume() - Bm) / pow(temp, 2);
         dVdN[k] = -dPdN[k] / dPdV;
