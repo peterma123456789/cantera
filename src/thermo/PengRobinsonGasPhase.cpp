@@ -8,6 +8,8 @@
 #include "cantera/thermo/PengRobinsonGasPhase.h"
 #include "cantera/base/utilities.h"
 
+#include <iostream>
+
 using namespace std;
 
 namespace Cantera
@@ -125,7 +127,7 @@ void PengRobinsonGasPhase::getPartialMolarEnthalpies(doublereal* hbar) const
     doublereal temp = Am - temperature() * dAmdT;
     for (size_t k = 0; k < m_kk; k++) {
         if (IsCrit[k] == 0) continue;
-        hbar[k] -= rt + dK1dN[k] * temp +
+        hbar[k] += -rt + dK1dN[k] * temp +
                    K1 * (dAmdN[k] - temperature() * d2AmdTdN[k]) +
                    pressure() * dVdN[k];
         // hbar[k] = hbar0[k];
