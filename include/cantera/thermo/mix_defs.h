@@ -36,6 +36,7 @@ namespace Cantera
    */
   const int cIdealGas = 1;       //  IdealGasPhase in IdealGasPhase.h
   const int cPengRobinsonGas = 15;       //  PengRobinsonGasPhase in PengRobinsonGasPhase.h
+  const int cPengRobinsonMDGas = 155;       //  PengRobinsonMDGasPhase in PengRobinsonMDGasPhase.h
   const int cBlendGas = 25;       //  BlendGasPhase in BlendGasPhase.h
   // Peter Modified
   const int cIncompressible = 2; //  ConstDensityThermo in ConstDensityThermo.h

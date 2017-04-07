@@ -13,6 +13,7 @@
 #include "cantera/thermo/GeneralSpeciesThermo.h"
 #include "cantera/thermo/IdealGasPhase.h"
 #include "cantera/thermo/PengRobinsonGasPhase.h"
+#include "cantera/thermo/PengRobinsonMDGasPhase.h"
 #include "cantera/thermo/BlendGasPhase.h"
 #include "cantera/thermo/VPSSMgr.h"
 #include "VPSSMgrFactory.h"
@@ -79,7 +80,7 @@ static string _types[] = {
     "IonsFromNeutralMolecule", "FixedChemPot", "MolarityIonicVPSSTP",
     "MixedSolventElectrolyte", "Redlich-Kister", "RedlichKwong",
     "RedlichKwongMFTP", "MaskellSolidSolnPhase",
-    "PengRobinsonGas", "BlendGas"}; // Peter Modified
+    "PengRobinsonGas", "PengRobinsonMDGas", "BlendGas"}; // Peter Modified
 
 //! Define the integer id of the ThermoPhase types that are handled by this factory routine
 static int _itypes[] = {
@@ -92,7 +93,7 @@ static int _itypes[] = {
     cMargulesVPSSTP, cPhaseCombo_Interaction, cIonsFromNeutral, cFixedChemPot,
     cMolarityIonicVPSSTP, cMixedSolventElectrolyte, cRedlichKisterVPSSTP,
     cRedlichKwongMFTP, cRedlichKwongMFTP, cMaskellSolidSolnPhase,
-    cPengRobinsonGas, cBlendGas}; // Peter Modified
+    cPengRobinsonGas, cPengRobinsonMDGas, cBlendGas}; // Peter Modified
 
 ThermoPhase* ThermoFactory::newThermoPhase(const std::string& model)
 {
@@ -111,6 +112,8 @@ ThermoPhase* ThermoFactory::newThermoPhase(const std::string& model)
             return new IdealGasPhase;
         case cPengRobinsonGas:
             return new PengRobinsonGasPhase; // Peter Modified
+        case cPengRobinsonMDGas:
+            return new PengRobinsonMDGasPhase; // Peter Modified
         case cBlendGas:
             return new BlendGasPhase; // Peter Modified
         case cIncompressible:
