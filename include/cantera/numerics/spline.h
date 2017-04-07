@@ -31,6 +31,9 @@
 #include <vector>
 #include <algorithm>
 
+namespace Cantera
+{
+
 namespace tk
 {
 
@@ -110,5 +113,7 @@ class spline
 };
 
 } // namespace tk
+
+} // namespace Cantera
 
 #endif /* TK_SPLINE_H */

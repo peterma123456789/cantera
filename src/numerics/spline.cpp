@@ -1,4 +1,6 @@
-#include "spline.h"
+#include "cantera/numerics/spline.h"
+
+namespace Cantera {
 
 namespace tk {
 
@@ -318,3 +320,5 @@ double spline::deriv(int order, double x) const {
 }
 
 } // namespace tk
+
+} // namespace Cantera

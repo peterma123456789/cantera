@@ -14,6 +14,9 @@
 
 #include "cantera/numerics/spline.h"
 
+#include <fstream>
+#include <iostream>
+
 namespace Cantera
 {
 
@@ -27,13 +30,16 @@ public:
 
     //! Copy Constructor
     PengRobinsonMDGasPhase(const PengRobinsonMDGasPhase& right)
-        : PengRobinsonGasPhase(right), mySpline(right.mySpline) {};
+        : PengRobinsonGasPhase(right),
+          mySplineRho(right.mySplineRho),
+          mySplineCp(right.mySplineCp){};
 
     //! Assignment operator
     PengRobinsonMDGasPhase& operator=(const PengRobinsonMDGasPhase& right)
     {
         PengRobinsonGasPhase::operator=(right);
-        mySpline = right.mySpline;
+        mySplineRho = right.mySplineRho;
+        mySplineCp = right.mySplineCp;
         return *this;
     };
 
@@ -46,12 +52,14 @@ public:
         return cPengRobinsonMDGas;
     }
 
-private:
-    //! File of MD data
-    std::string fileName;
+    //! read in file and set up spline
+    //! HARD-CODED for single species (AR) right now
+    void setSpline(std::string fileName);
 
+private:
     //! spline object
-    tk::spline mySpline;
+    tk::spline mySplineRho;
+    tk::spline mySplineCp;
 };
 }
 
