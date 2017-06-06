@@ -7,6 +7,7 @@ export BOOST_DIR=/usr/local/Cellar/boost/1.63.0/include
 
 scons -j4 build prefix=$CANTERA_DIR CXX=clang++ CC=clang python_package=full \
     sundials_include=$SUN_INCLUDE sundials_libdir=$SUN_LIB \
-    boost_inc_dir=$BOOST_DIR f90_interface=n
+    boost_inc_dir=$BOOST_DIR f90_interface=n \
+    cxx_flags=-std=c++11
 # scons test
 scons -j4 install
