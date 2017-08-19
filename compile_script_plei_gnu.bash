@@ -3,12 +3,12 @@
 export CANTERA_DIR=/nobackup/cma3/local/cantera/2.4.0
 export SUN_INCLUDE=/nobackup/cma3/local/sundials/2.7.0/include
 export SUN_LIB=/nobackup/cma3/local/sundials/2.7.0/lib
-export BOOST_DIR=/nobackup/cma3/local/boost/1.63.0/include
-export EIGEN_INCLUDE=/nobackup/cma3/local/eigen/3.3.2/eigen/
+export BOOST_DIR=/nasa/pkgsrc/sles12/2016Q4/views/boost/1.62/include
+export EIGEN_INCLUDE=/nobackup/cma3/local/eigen/3.2.9/eigen/
 
 scons -j20 build prefix=$CANTERA_DIR \
-  CXX=icpc CC=icc FORTRAN=ifort python_package=full \
-  optimize_flags='-O3 -ip -axCORE-AVX2 -xAVX' \
+  CXX=g++ CC=gcc FORTRAN=gfortran python_package=full \
+  optimize_flags='-O3 -march=ivybridge' \
   env_vars='all' \
   sundials_include=$SUN_INCLUDE sundials_libdir=$SUN_LIB \
   boost_inc_dir=$BOOST_DIR f90_interface=y system_eigen=y extra_inc_dirs=$EIGEN_INCLUDE
