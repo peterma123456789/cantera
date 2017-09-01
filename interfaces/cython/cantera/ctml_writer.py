@@ -1969,7 +1969,7 @@ class qssa_gas(phase):
                  note = '',
                  reactions = 'none',
                  phases = [],
-                 kinetics = 'GasKinetics',
+                 kinetics = 'GasQSSKinetics',
                  transport = 'None',
                  initial_state = None,
                  options = []):
