@@ -354,13 +354,6 @@ bool GasQSSKinetics::addReactionQSS(shared_ptr<Reaction> r)
     // return if no QSS on either side
     if (!qss_rts.size() && !qss_pds.size()) return true;
 
-    // warn if more than one QSS on one side
-    if (qss_rts.size() > 1 || (qss_pds.size() > 1 && r->reversible))  {
-        writelog(
-            "WARNING: more than one QSS species on"
-            " the destruction side of reaction {}: {}.\n",
-            nReactions() - 1, r->equation());
-    }
     // fill m_rodf_qss
     if (qss_rts.size() > 1) m_rodf_mqss.push_back(nReactions()- 1);
     else if (qss_rts.size() == 1)

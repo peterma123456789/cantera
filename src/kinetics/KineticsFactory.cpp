@@ -7,6 +7,7 @@
 
 #include "cantera/kinetics/KineticsFactory.h"
 #include "cantera/kinetics/GasKinetics.h"
+#include "cantera/kinetics/GasQSSKinetics.h"
 #include "cantera/kinetics/InterfaceKinetics.h"
 #include "cantera/kinetics/EdgeKinetics.h"
 #include "cantera/kinetics/importKinetics.h"
@@ -31,10 +32,10 @@ Kinetics* KineticsFactory::newKinetics(XML_Node& phaseData,
 
     // Create a kinetics object of the desired type
     Kinetics* k = newKinetics(kintype);
+
     // Now that we have the kinetics manager, we can import the reaction
     // mechanism into it.
     importKinetics(phaseData, th, k);
-
     // Return the pointer to the kinetics manager
     return k;
 }
@@ -42,6 +43,7 @@ Kinetics* KineticsFactory::newKinetics(XML_Node& phaseData,
 KineticsFactory::KineticsFactory() {
     reg("none", []() { return new Kinetics(); });
     reg("gaskinetics", []() { return new GasKinetics(); });
+    reg("gasqsskinetics", []() { return new GasQSSKinetics(); });
     reg("interface", []() { return new InterfaceKinetics(); });
     reg("edge", []() { return new EdgeKinetics(); });
     reg("aqueouskinetics", []() { return new AqueousKinetics(); });

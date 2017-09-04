@@ -414,6 +414,10 @@ cdef class _FlowBase(Domain1D):
         self.gas = phase
         self.flow.setTransport(deref(self.gas.transport))
 
+    def set_kinetics(self, Kinetics kin):
+      """Set the kinetics manager (surface reaction mechanism object)."""
+      self.flow.setKinetics(deref(kin.kinetics))
+
     property soret_enabled:
         """
         Determines whether or not to include diffusive mass fluxes due to the

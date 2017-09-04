@@ -31,6 +31,15 @@ class FlameBase(Sim1D):
         self.gas = gas
         self.flame.P = gas.P
 
+    def set_kin(self, kin):
+        """
+        Set the kinetics model for flame.
+
+        :param kin:
+            object to use to evaluate reaction rates, which can be different from the gas object
+        """
+        self.flame.set_kinetics(kin)
+
     def set_refine_criteria(self, ratio=10.0, slope=0.8, curve=0.8, prune=0.0):
         """
         Set the criteria used for grid refinement.
