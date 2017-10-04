@@ -427,7 +427,29 @@ public:
      */
     virtual void setPressure(doublereal p);
 
-    //TODO: there is a setState_RP in idealgas class!
+    //! Set the density and pressure at constant composition.
+    /*!
+     * Units: kg/m^3, Pa.
+     * This method is implemented by setting the density to the input value and
+     * setting the temperature to
+     * \f[
+     * T = \frac{P \overline W}{\hat R \rho}.
+     * \f]
+     *
+     * @param rho Density (kg/m^3)
+     * @param p Pressure (Pa)
+     */
+    virtual void setState_RP(doublereal rho, doublereal p)
+    {
+        if (p <= 0) {
+            throw CanteraError("PengRobinsonGasPhase::setState_RP",
+                               "pressure must be positive");
+        }
+        setDensity(rho);
+        SetRealFluidConstants();
+        setTemperature(GetTemperatureFromPressureDensity_anal(p, rho));
+        //_updateThermoRealFluid();
+    }
 
     //! Returns  the isothermal compressibility. Units: 1/Pa.
     /**
@@ -439,7 +461,9 @@ public:
      */
     virtual doublereal isothermalCompressibility() const
     {
-        return 1.0 / pressure();
+        _updateThermoRealFluid();
+        //printf("V = %g, dpdv = %g\n", molarVolume(), dPdV);
+        return -1.0 / (molarVolume() * dPdV);
     }
 
     //! Return the volumetric thermal expansion coefficient. Units: 1/K.
@@ -846,6 +870,9 @@ public:
     // void SetAm() const;
     void SetRealFluidThermodynamics() const;
 
+    doublereal GetTemperatureFromPressureDensity_anal(doublereal p_in,
+                                                      doublereal rho_in);
+
     doublereal GetVolumeFromPressureTemperature(doublereal p_in,
                                                 doublereal T_in) const;
 
@@ -931,6 +958,11 @@ protected:
     mutable vector_fp cst_a;
     mutable vector_fp cst_b; // bi
     mutable vector_fp cst_c;
+
+    // criical properties
+    mutable vector_fp cst_aa;
+    mutable vector_fp cst_bb;
+    mutable vector_fp cst_cc;
 
     // Am and Bm in eos
     mutable doublereal Am;      // f(T, Y)

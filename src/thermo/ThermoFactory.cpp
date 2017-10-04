@@ -14,6 +14,7 @@
 #include "cantera/thermo/SpeciesThermoFactory.h"
 #include "cantera/thermo/MultiSpeciesThermo.h"
 #include "cantera/thermo/IdealGasPhase.h"
+#include "cantera/thermo/PengRobinsonGasPhase.h"
 
 #include "cantera/thermo/IdealSolidSolnPhase.h"
 #include "cantera/thermo/MaskellSolidSolnPhase.h"
@@ -50,7 +51,7 @@ ThermoFactory* ThermoFactory::s_factory = 0;
 std::mutex ThermoFactory::thermo_mutex;
 
 //! Define the string name of the ThermoPhase types that are handled by this factory routine
-static string _types[] = {"IdealGas", "Incompressible",
+static string _types[] = {"IdealGas", "PengRobinsonGas", "Incompressible",
                           "Surface", "Edge", "Metal", "StoichSubstance",
                           "PureFluid", "LatticeSolid", "Lattice",
                           "HMW", "IdealSolidSolution", "DebyeHuckel",
@@ -64,6 +65,7 @@ static string _types[] = {"IdealGas", "Incompressible",
 ThermoFactory::ThermoFactory()
 {
     reg("IdealGas", []() { return new IdealGasPhase(); });
+    reg("PengRobinsonGas", []() { return new PengRobinsonGasPhase(); });
     reg("Incompressible", []() { return new ConstDensityThermo(); });
     reg("Surface", []() { return new SurfPhase(); });
     reg("Edge", []() { return new EdgePhase(); });
