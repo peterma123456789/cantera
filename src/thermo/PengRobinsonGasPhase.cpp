@@ -404,9 +404,28 @@ void PengRobinsonGasPhase::ReadCriticalProperties() const
             omega[k] = 0.0372;
             sigma[k] = 0.0;
             dipole[k] = 0.0;
+        } else if (speciesName(k) == "NC12H26") {
+            IsCrit[k] = 1;
+            Tcrit[k] = 658.10;    // K
+            Pcrit[k] = 1.817e+6; // Pa
+            Vcrit[k] = 751.8797e-3; // m3/kmol
+            rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
+            Zcrit[k] = (Pcrit[k] * Vcrit[k]) / (GasConstant * Tcrit[k]);
+            omega[k] = 0.57639;
+            sigma[k] = 0.0;
+            dipole[k] = 0.0;
         } else {
+            IsCrit[k] = 0;
+            Tcrit[k] = 126.19;    // K
+            Pcrit[k] = 3.3958e+6; // Pa
+            Vcrit[k] = 89.41e-3; // m3/kmol
+            rhocrit[k] = molecularWeight(k) / Vcrit[k]; // kg/m3
+            Zcrit[k] = (Pcrit[k] * Vcrit[k]) / (GasConstant * Tcrit[k]);
+            omega[k] = 0.0372;
+            sigma[k] = 0.0;
+            dipole[k] = 0.0;
             cout << " Unknown or non-major species : " << speciesName(k)
-                 << ". All critical properties were set to zero." << endl;
+                 << ". All critical properties were set to N2 values with IsCrit 0." << endl;
         }
     }
 }
